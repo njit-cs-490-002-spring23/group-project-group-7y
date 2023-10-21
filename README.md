@@ -45,3 +45,26 @@ Create a `.env` file in the `frontend` directory, with the line: `NEXT_PUBLIC_TO
 
 In the `frontend` directory, run `npm start` (again, you'll need to run `npm install` the very first time). After several moments (or minutes, depending on the speed of your machine), a browser will open with the frontend running locally.
 The frontend will automatically re-compile and reload in your browser if you change any files in the `frontend/src` directory.
+
+## Sprint 0
+
+### Task 1
+[Chess Research](https://docs.google.com/document/d/1ltdmtVU1qt_3xL7zMYdBfDGNctp5DIB7kuPOp2u8hF0/edit?usp=share_link)
+
+### Task 2
+[Research and document common chess UI’s for ideas](https://docs.google.com/document/d/1sRrt-LXmMD0XZuwsx1H9pcTn259IzrWjv2b6xTpSQWk/edit?usp=share_link)
+
+### Task 3
+[Chess Implementation](https://docs.google.com/document/d/1QeHZiVdBC0Sml9_cBELD4x3lXeFCeFw6HailgKoM_i8/edit?usp=share_link)
+
+### Task 4
+[Research and document common game review features and actions for chess ](https://docs.google.com/document/d/1DC-Zvpw6DinjGFsLewzPPfa1pLaYa0V2NhS9mOU2oaI/edit?usp=share_link)
+
+### Task 5
+[Research third-party chess APIs that allow to obtain the next best move ](https://docs.google.com/document/d/1XoSNqdx_ildbTRr0SJjol3wtLF7AhcIjw-_rWmYIDRQ/edit?usp=share_link)
+
+### Task 6
+[3rd Party API for User Interface - Documentation](https://docs.google.com/document/d/14h7mEIp4um5r5NJPfUguPTzycIIcw614JpGbsvwFkw8/edit?usp=share_link)
+
+### Task 7
+[Design interfaces and data types for frontend and create documentation for interfaces](https://docs.google.com/document/d/1TooDaz6ug2rfLgawBFNe0XpcEqPa4QvlFDVyUWbLrJw/edit?usp=share_link)
