@@ -58,7 +58,13 @@ The frontend will automatically re-compile and reload in your browser if you cha
 [Chess Implementation](https://docs.google.com/document/d/1QeHZiVdBC0Sml9_cBELD4x3lXeFCeFw6HailgKoM_i8/edit?usp=share_link)
 
 ### Task 4
-[WIP](https://docs.google.com/document/d/1QeHZiVdBC0Sml9_cBELD4x3lXeFCeFw6HailgKoM_i8/edit?usp=share_link)
+[Research and document common game review features and actions for chess ](https://docs.google.com/document/d/1DC-Zvpw6DinjGFsLewzPPfa1pLaYa0V2NhS9mOU2oaI/edit?usp=share_link)
 
 ### Task 5
 [Research third-party chess APIs that allow to obtain the next best move ](https://docs.google.com/document/d/1XoSNqdx_ildbTRr0SJjol3wtLF7AhcIjw-_rWmYIDRQ/edit?usp=share_link)
+
+### Task 6
+[3rd Party API for User Interface - Documentation](https://docs.google.com/document/d/14h7mEIp4um5r5NJPfUguPTzycIIcw614JpGbsvwFkw8/edit?usp=share_link)
+
+### Task 7
+[Design interfaces and data types for frontend and create documentation for interfaces](https://docs.google.com/document/d/1TooDaz6ug2rfLgawBFNe0XpcEqPa4QvlFDVyUWbLrJw/edit?usp=share_link)
