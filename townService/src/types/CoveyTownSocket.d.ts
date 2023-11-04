@@ -41,8 +41,15 @@ export interface GameMove<MoveType> {
 }
 
 /**
- * Type for a move in TicTacToe
- * The row and column are 0-indexed, so the top left square is (0,0) and the bottom right square is (2,2)
+ * Type for a move in Chess
+ * Each move is for a specific gamePiece:
+ *  - p for pawn
+ *  - b for bishop
+ *  - n for knight
+ *  - k for king
+ *  - q for queen
+ *  The current position of the gamePiece is specificed with currentRank and currentFile
+ *  The destination position of the gamePiece is specified by destinationRank and destinationFile
  */
 export interface ChessMove {
   gamePiece: 'p' | 'b' | 'n' | 'r' | 'k' | 'q';
@@ -58,7 +65,7 @@ export type ChessFilePosition = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
 
 /**
  * Type for the state of a Chess game
- * The state of the game is represented as a list of moves, and the playerIDs of the players (x and o)
+ * The state of the game is represented as a list of moves, and the playerIDs of the players (white and black)
  * The first player to join the game is white, the second is black
  */
 export interface ChessGameState extends WinnableGameState {
@@ -126,7 +133,7 @@ interface InteractableCommandBase {
 export type InteractableCommand =
   | ViewingAreaUpdateCommand
   | JoinGameCommand
-  | GameMoveCommand<TicTacToeMove>
+  | GameMoveCommand<ChessMove>
   | LeaveGameCommand;
 export interface ViewingAreaUpdateCommand {
   type: 'ViewingAreaUpdate';
@@ -149,7 +156,7 @@ export type InteractableCommandReturnType<CommandType extends InteractableComman
     ? { gameID: string }
     : CommandType extends ViewingAreaUpdateCommand
     ? undefined
-    : CommandType extends GameMoveCommand<TicTacToeMove>
+    : CommandType extends GameMoveCommand<ChessMove>
     ? undefined
     : CommandType extends LeaveGameCommand
     ? undefined
