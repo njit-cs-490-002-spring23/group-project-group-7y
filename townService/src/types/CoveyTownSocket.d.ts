@@ -16,7 +16,7 @@ export type CoveyTownSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 export type TownEmitter = BroadcastOperator<ServerToClientEvents, SocketData>;
 export type TownEmitterFactory = (townID: string) => TownEmitter;
 
-export type InteractableType = 'ConversationArea' | 'ViewingArea' | 'TicTacToeArea';
+export type InteractableType = 'ConversationArea' | 'ViewingArea' | 'ChessArea';
 
 export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER';
 /**
