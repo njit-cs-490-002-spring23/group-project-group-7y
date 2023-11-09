@@ -71,12 +71,12 @@ The frontend will automatically re-compile and reload in your browser if you cha
 
 ## Sprint 1
 
-### Task 0
+### Task 1
 [Database Research and Management with Typescript](https://docs.google.com/document/d/1bqMUMFa7O4HjRHJGxy82FTstx-rrYhfpN3GVkhX_LXs/edit?usp=sharing)
 
-### Task 2 
+### Task 3
 [Designing the user interace for the gameboard](https://docs.google.com/document/d/1pREZEXUDe0_FscI3BMJkE5hS-1aM2Qsn4YKFWjh4zmM/edit?usp=sharing)
 
-### Task 5
+### Task 6
 [Research and Documentation for Chess GUI Implementation](https://docs.google.com/document/d/11To7b_DTHehHaiW3Tg7cwgZXYCvJHyCM3t3HjxkCOR8/edit?usp=sharing)
 
