@@ -68,3 +68,24 @@ The frontend will automatically re-compile and reload in your browser if you cha
 
 ### Task 7
 [Design interfaces and data types for frontend and create documentation for interfaces](https://docs.google.com/document/d/1TooDaz6ug2rfLgawBFNe0XpcEqPa4QvlFDVyUWbLrJw/edit?usp=share_link)
+
+## Sprint 1
+
+### Task 1
+[Database Research and Management with Typescript](https://docs.google.com/document/d/1bqMUMFa7O4HjRHJGxy82FTstx-rrYhfpN3GVkhX_LXs/edit?usp=sharing)
+
+### Task 2
+[Design of the gameboard and chess pieces](https://docs.google.com/presentation/d/1jmmCHMWRPT9zuWl78vUmkmx3GFAD6Zj-/edit?usp=sharing&ouid=100718077119225492816&rtpof=true&sd=true)
+
+### Task 3
+[Designing the user interace for the gameboard](https://docs.google.com/document/d/1pREZEXUDe0_FscI3BMJkE5hS-1aM2Qsn4YKFWjh4zmM/edit?usp=sharing)
+
+### Task 4
+[Design chess leaderboard](https://docs.google.com/document/d/1PwIqL4AvGcFCycayBFnHccCfSCnx0Ok4/edit?usp=sharing&ouid=100718077119225492816&rtpof=true&sd=true)
+
+### Task 5
+[Design interfaces and data types for backend](townService/src/types/CoveyTownSocket.d.ts)
+
+### Task 6
+[Research and Documentation for Chess GUI Implementation](https://docs.google.com/document/d/11To7b_DTHehHaiW3Tg7cwgZXYCvJHyCM3t3HjxkCOR8/edit?usp=sharing)
+
