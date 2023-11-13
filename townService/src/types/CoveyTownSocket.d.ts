@@ -18,11 +18,6 @@ export type TownEmitterFactory = (townID: string) => TownEmitter;
 
 export type InteractableType = 'ConversationArea' | 'ViewingArea' | 'ChessArea';
 export type PlayerID = string;
-export interface Interactable {
-  type: InteractableType;
-  id: InteractableID;
-  occupants: PlayerID[];
-}
 
 export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER';
 /**
