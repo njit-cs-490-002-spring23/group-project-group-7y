@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import Player from '../../lib/Player';
 import {
   GameArea as GameAreaModel,

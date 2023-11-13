@@ -1,5 +1,15 @@
+/* eslint-disable @typescript-eslint/no-throw-literal */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { error } from 'console';
 import Player from '../../lib/Player';
-import { GameMove, ChessGameState, ChessMove } from '../../types/CoveyTownSocket';
+import {
+  GameMove,
+  ChessGameState,
+  ChessMove,
+  ChessFilePosition,
+  ChessRankPosition,
+} from '../../types/CoveyTownSocket';
 import Game from './Game';
 
 /**
@@ -20,16 +30,20 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param move The move to apply to the game
    * @throws InvalidParametersError if the move is invalid (with specific message noted above)
    */
-  protected _bestMove(): GameMove<ChessMove> {}
+  protected _bestMove(): GameMove<ChessMove> {
+    // eslint-disable-next-line prettier/prettier
+    throw  error('place holder');
+  }
 
   /**
-   * Returns all possible moves for the piece at the given rank and file 
-   * 
-   * @param rank The rank position
-   * @param file The file position
+   * Returns all possible moves for the piece at the given rank and file
+   * @param _rank The rank position
+   * @param _file The file position
    */
-  protected _possibleMoves(rank: ChessRankPosition, file: ChessFilePosition;): void {}
-
+  protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): void {
+    // eslint-disable-next-line prettier/prettier
+    throw  error('place holder');
+  }
 
   /*
    * Applies a player's move to the game.
@@ -50,18 +64,18 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param move The move to apply to the game
    * @throws InvalidParametersError if the move is invalid (with specific message noted above)
    */
-  public applyMove(move: GameMove<ChessMove>): void {}
+  public applyMove(_move: GameMove<ChessMove>): void {}
 
   /**
    * Adds a player to the game.
    * Updates the game's state to reflect the new player.
    * If the game is now full (has two players), updates the game's state to set the status to IN_PROGRESS.
    *
-   * @param player The player to join the game
+   * @param _player The player to join the game
    * @throws InvalidParametersError if the player is already in the game (PLAYER_ALREADY_IN_GAME_MESSAGE)
    *  or the game is full (GAME_FULL_MESSAGE)
    */
-  public _join(player: Player): void {}
+  public _join(_player: Player): void {}
 
   /**
    * Removes a player from the game.
@@ -71,8 +85,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If the game does not yet have two players in it at the time of call to this method,
    *   updates the game's status to WAITING_TO_START.
    *
-   * @param player The player to remove from the game
+   * @param _player The player to remove from the game
    * @throws InvalidParametersError if the player is not in the game (PLAYER_NOT_IN_GAME_MESSAGE)
    */
-  protected _leave(player: Player): void {}
+  protected _leave(_player: Player): void {}
 }

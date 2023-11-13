@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable class-methods-use-this */
 import Player from '../../lib/Player';
 import {
   InteractableCommand,
@@ -33,8 +35,8 @@ export default class ChessGameArea extends GameArea<ChessGame> {
    *
    * @see InteractableCommand
    *
-   * @param command command to handle
-   * @param player player making the request
+   * @param _command command to handle
+   * @param _player player making the request
    * @returns response to the command, @see InteractableCommandResponse
    * @throws InvalidParametersError if the command is not supported or is invalid. Invalid commands:
    *  - LeaveGame and GameMove: No game in progress (GAME_NOT_IN_PROGRESS_MESSAGE),
@@ -42,8 +44,8 @@ export default class ChessGameArea extends GameArea<ChessGame> {
    *  - Any command besides LeaveGame, GameMove and JoinGame: INVALID_COMMAND_MESSAGE
    */
   public handleCommand<CommandType extends InteractableCommand>(
-    command: CommandType,
-    player: Player,
+    _command: CommandType,
+    _player: Player,
   ): InteractableCommandReturnType<CommandType> {
     throw new Error('Unimplemented - remove this once you start to implement this method');
   }
