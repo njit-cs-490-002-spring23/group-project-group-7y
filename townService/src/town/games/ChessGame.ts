@@ -1,7 +1,7 @@
+// TODO: remove all eslint-disable
 /* eslint-disable @typescript-eslint/no-throw-literal */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { error } from 'console';
 import Player from '../../lib/Player';
 import {
   GameMove,
@@ -32,7 +32,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
   protected _bestMove(): GameMove<ChessMove> {
     // eslint-disable-next-line prettier/prettier
-    throw  error('place holder');
+    throw new Error('Remove Before Implementing');
   }
 
   /**
@@ -42,7 +42,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
   protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): void {
     // eslint-disable-next-line prettier/prettier
-    throw  error('place holder');
+    throw new Error('Remove Before Implementing');
   }
 
   /*

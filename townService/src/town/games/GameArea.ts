@@ -1,3 +1,4 @@
+// TODO: remove all eslint-disable
 /* eslint-disable class-methods-use-this */
 import Player from '../../lib/Player';
 import {
