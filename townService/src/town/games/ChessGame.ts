@@ -158,14 +158,14 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return board;
   }
 
-  private _getKingPosition(color: 'W' | 'B'): Position {
+  protected _getKingPosition(color: 'W' | 'B'): Position {
     for (let rank = 1; rank <= 8; rank++) {
       for (const fileKey of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
         const fileIndex = this._fileToIndex(fileKey as ChessFilePosition);
-        const piece = this.board[rank][fileIndex];
-        if (piece.piece === 'K' && piece.color === color) {
+        const piece = this.board[rank - 1][fileIndex];
+        if (piece !== null && piece.piece === 'K' && piece.color === color) {
           return {
-            rank: (rank + 1) as ChessRankPosition,
+            rank: rank as ChessRankPosition,
             file: fileKey as ChessFilePosition,
           };
         }
@@ -174,18 +174,19 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     throw new Error('King not found');
   }
 
-  private _getAllPossibleMoves(color: 'W' | 'B'): ChessMove[] {
-    const pieces = this._getPieces(color);
-    let moves: ChessMove[] = [];
+  // TODO: change _color to color, and uncomment code when possibleMoves is done.
+  protected _getAllPossibleMoves(_color: 'W' | 'B'): ChessMove[] {
+    // const pieces = this._getPieces(color);
+    // let moves: ChessMove[] = [];
+    // pieces.forEach(piece => {
+    //   moves = moves.concat(this._possibleMoves(piece.position.rank, piece.position.file));
+    // });
 
-    pieces.forEach(piece => {
-      moves = moves.concat(this._possibleMoves(piece.position.rank, piece.position.file));
-    });
-
-    return moves;
+    // return moves;
+    return [];
   }
 
-  private _getPieces(color: 'W' | 'B'): PieceWithPosition[] {
+  protected _getPieces(color: 'W' | 'B'): PieceWithPosition[] {
     const pieces: PieceWithPosition[] = [];
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
@@ -242,9 +243,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // Find the king's position for the current player
     const kingPosition = this._getKingPosition(currentPlayerColor);
     // If the king is not in check, then it's not checkmate
-    if (!this._isKingInCheck(kingPosition, gameState, currentPlayerColor)) {
-      return false;
-    }
+    // TODO: Uncomment when isKingInCheck is implemented
+    // if (!this._isKingInCheck(kingPosition, gameState, currentPlayerColor)) {
+    //   return false;
+    // }
     // Get all possible moves for the current player
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
     // Check if any move can take the king out of check
@@ -252,11 +254,14 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       // Apply each move to a hypothetical game state
       const hypotheticalGameState = this._applyMoveToTemporaryBoard(move, gameState);
       // Check if the king would still be in check after the move
-      return !this._isKingInCheck(this._getKingPosition(currentPlayerColor, hypotheticalGameState), hypotheticalGameState, currentPlayerColor);
+      // TODO: Uncomment when isKingInCheck is implemented, then remove the return false
+      // return !this._isKingInCheck(this._getKingPosition(currentPlayerColor, hypotheticalGameState), hypotheticalGameState, currentPlayerColor);
+      // Default return for now
+      return false;
     });
   }
 
-  private _applyMoveToTemporaryBoard(move: ChessMove, gameState: ChessGameState): ChessGameState {
+  protected _applyMoveToTemporaryBoard(move: ChessMove, gameState: ChessGameState): ChessGameState {
     // Create a new game state object by copying the existing one
     const tempGameState: ChessGameState = {
       ...gameState,
@@ -290,7 +295,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return tempGameState;
   }
 
-  private _isKingInCheck(arg0: Position, hypotheticalGameState: any, currentPlayerColor: string) {
+  protected _isKingInCheck(
+    _arg0: Position,
+    _hypotheticalGameState: unknown,
+    _currentPlayerColor: string,
+  ) {
     throw new Error('Method not implemented.');
   }
 
