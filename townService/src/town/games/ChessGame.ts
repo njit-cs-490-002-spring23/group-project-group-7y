@@ -114,7 +114,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
 
     // Initialize board with pieces in initial positions
-    // For simplicity, only pawns and a few pieces are shown. You'll need to initialize all pieces.
+    // For simplicity, only pawns and a few pieces are shown. You'll need to initialize all pieces. When we implement later, this is just for testing for now.
     const initialPositions: { [key: string]: ChessPiece } = {
       a1: 'R',
       b1: 'N',
@@ -268,7 +268,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       moves: [...gameState.moves, move], // Add the new move to the end of the moves array
     };
 
-    // Assuming we have a method that can apply all moves to get the current board state
     const tempBoard = this.board;
 
     // Translate the files to indices
@@ -287,9 +286,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
 
     // Clear the starting square in the temporary board
     tempBoard[fromRankIndex][fromFileIndex] = { piece: undefined, color: undefined };
-
-    // Now, you would need a way to convert this tempBoard back into moves
-    // if your gameState strictly represents the game only in moves and not as a board state.
 
     // Return the updated game state
     return tempGameState;
