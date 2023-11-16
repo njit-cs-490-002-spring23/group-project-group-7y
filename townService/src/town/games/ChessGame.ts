@@ -228,7 +228,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   /**
    * Determines if the current position is a checkmate.
    * Checkmate occurs when a player's king is in a position to be captured (in "check")
-   * and there is no legal move that player can make to escape the check. This method 
+   * and there is no legal move that player can make to escape the check. This method
    * should analyze the game state to determine if these conditions are met.
    *
    * @param {ChessGameState} gameState - The current state of the chess game.
