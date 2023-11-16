@@ -77,6 +77,17 @@ export interface ChessGameState extends WinnableGameState {
   black?: PlayerID;
 }
 
+export interface Position {
+  rank: ChessRankPosition;
+  file: ChessFilePosition;
+}
+
+export interface PieceWithPosition {
+  type: ChessPiece;
+  color: 'W' | 'B';
+  position: Position;
+}
+
 export type InteractableID = string;
 export type GameInstanceID = string;
 
