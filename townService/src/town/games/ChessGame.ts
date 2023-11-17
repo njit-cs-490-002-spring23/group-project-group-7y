@@ -302,13 +302,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * Determines if the current position is a stalemate.
    * A stalemate occurs when the player to move is not in check but has no legal move.
    *
-   * @param {ChessGameState} gameState - The current state of the chess game.
    * @returns {boolean} - True if the position is a stalemate, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid.
    */
 
-  public isStalemate(gameState: ChessGameState): boolean {
-    const gameStated = gameState;
+  public isStalemate(): boolean {
     return false; // Default return value
   }
 
