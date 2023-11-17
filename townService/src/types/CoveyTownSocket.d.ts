@@ -66,6 +66,12 @@ export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type ChessFilePosition = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
 
+export type ChessPiece = {
+  pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
+  pieceColor: 'white' | 'black';
+}; // Kings, Queens, Rooks, Bishops, Knights, Pawns
+
+export type ChessCell = { piece: ChessPiece; color: 'W' | 'B' } | undefined;
 /**
  * Type for the state of a Chess game
  * The state of the game is represented as a list of moves, and the playerIDs of the players (white and black)
@@ -77,7 +83,7 @@ export interface ChessGameState extends WinnableGameState {
   black?: PlayerID;
 }
 
-export interface Position {
+export interface ChessPosition {
   rank: ChessRankPosition;
   file: ChessFilePosition;
 }

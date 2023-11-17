@@ -10,14 +10,11 @@ import {
   ChessFilePosition,
   ChessRankPosition,
   PieceWithPosition,
-  Position,
+  ChessPosition,
+  ChessCell,
+  ChessPiece,
 } from '../../types/CoveyTownSocket';
 import Game from './Game';
-
-export type ChessPiece = 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined; // Kings, Queens, Rooks, Bishops, Knights, Pawns
-export type ChessCell =
-  | { piece: ChessPiece; color: 'W' | 'B' }
-  | { piece: undefined; color: undefined };
 
 /**
  * A ChessGame is a Game that implements the rules of Chess.
@@ -105,65 +102,68 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * and board[7][7] is the bottom-right cell
    */
   get board(): ChessCell[][] {
-    // Initialize an 8x8 array of ChessCells
+    // Initialize an 8x8 array of ChessCells with null values to represent the empty squares
     const board: ChessCell[][] = Array(8)
       .fill(null)
       .map(() => Array(8).fill(null));
-
     // Function to translate file to array index
     const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
-
     // Initialize board with pieces in initial positions
-    // For simplicity, only pawns and a few pieces are shown. You'll need to initialize all pieces. When we implement later, this is just for testing for now.
     const initialPositions: { [key: string]: ChessPiece } = {
-      a1: 'R',
-      b1: 'N',
-      c1: 'B',
-      d1: 'Q',
-      e1: 'K',
-      f1: 'B',
-      g1: 'N',
-      h1: 'R',
-      a2: 'P',
-      b2: 'P',
-      c2: 'P',
-      d2: 'P',
-      e2: 'P',
-      f2: 'P',
-      g2: 'P',
-      h2: 'P',
-      a7: 'P',
-      b7: 'P',
-      c7: 'P',
-      d7: 'P',
-      e7: 'P',
-      f7: 'P',
-      g7: 'P',
-      h7: 'P',
-      a8: 'R',
-      b8: 'N',
-      c8: 'B',
-      d8: 'Q',
-      e8: 'K',
-      f8: 'B',
-      g8: 'N',
-      h8: 'R',
+      a1: { pieceType: 'R', pieceColor: 'white' },
+      b1: { pieceType: 'N', pieceColor: 'white' },
+      c1: { pieceType: 'B', pieceColor: 'white' },
+      d1: { pieceType: 'Q', pieceColor: 'white' },
+      e1: { pieceType: 'K', pieceColor: 'white' },
+      f1: { pieceType: 'B', pieceColor: 'white' },
+      g1: { pieceType: 'N', pieceColor: 'white' },
+      h1: { pieceType: 'R', pieceColor: 'white' },
+      a2: { pieceType: 'P', pieceColor: 'white' },
+      b2: { pieceType: 'P', pieceColor: 'white' },
+      c2: { pieceType: 'P', pieceColor: 'white' },
+      d2: { pieceType: 'P', pieceColor: 'white' },
+      e2: { pieceType: 'P', pieceColor: 'white' },
+      f2: { pieceType: 'P', pieceColor: 'white' },
+      g2: { pieceType: 'P', pieceColor: 'white' },
+      h2: { pieceType: 'P', pieceColor: 'white' },
+      a7: { pieceType: 'P', pieceColor: 'black' },
+      b7: { pieceType: 'P', pieceColor: 'black' },
+      c7: { pieceType: 'P', pieceColor: 'black' },
+      d7: { pieceType: 'P', pieceColor: 'black' },
+      e7: { pieceType: 'P', pieceColor: 'black' },
+      f7: { pieceType: 'P', pieceColor: 'black' },
+      g7: { pieceType: 'P', pieceColor: 'black' },
+      h7: { pieceType: 'P', pieceColor: 'black' },
+      a8: { pieceType: 'R', pieceColor: 'black' },
+      b8: { pieceType: 'N', pieceColor: 'black' },
+      c8: { pieceType: 'B', pieceColor: 'black' },
+      d8: { pieceType: 'Q', pieceColor: 'black' },
+      e8: { pieceType: 'K', pieceColor: 'black' },
+      f8: { pieceType: 'B', pieceColor: 'black' },
+      g8: { pieceType: 'N', pieceColor: 'black' },
+      h8: { pieceType: 'R', pieceColor: 'black' },
     };
     Object.entries(initialPositions).forEach(([key, piece]) => {
       const file = key[0] as ChessFilePosition;
       const rank = parseInt(key[1], 10) as ChessRankPosition;
-      const color: 'W' | 'B' = rank > 6 ? 'B' : 'W';
-      board[rank - 1][fileToIndex(file)] = { piece, color };
+      if (piece) {
+        const cell: ChessCell = {
+          piece,
+          color: piece.pieceColor === 'white' ? 'W' : 'B',
+        };
+        board[rank - 1][fileToIndex(file)] = cell;
+      }
     });
+
     return board;
   }
 
-  protected _getKingPosition(color: 'W' | 'B'): Position {
+  protected _getKingPosition(color: 'W' | 'B'): ChessPosition {
     for (let rank = 1; rank <= 8; rank++) {
       for (const fileKey of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
         const fileIndex = this._fileToIndex(fileKey as ChessFilePosition);
         const piece = this.board[rank - 1][fileIndex];
-        if (piece !== null && piece.piece === 'K' && piece.color === color) {
+        if (piece?.piece.pieceType === 'K' && piece.color === color) {
           return {
             rank: rank as ChessRankPosition,
             file: fileKey as ChessFilePosition,
@@ -231,15 +231,14 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * and there is no legal move that player can make to escape the check. This method
    * should analyze the game state to determine if these conditions are met.
    *
-   * @param {ChessGameState} gameState - The current state of the chess game.
    * @returns {boolean} - True if the position is a checkmate, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid or if the checkmate
    *                   condition cannot be determined with the provided information.
    */
 
-  public isCheckmate(gameState: ChessGameState): boolean {
+  public isCheckmate(): boolean {
     // Determine the current player's color based on the number of moves
-    const currentPlayerColor = gameState.moves.length % 2 === 0 ? 'W' : 'B';
+    const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
     // Find the king's position for the current player
     const kingPosition = this._getKingPosition(currentPlayerColor);
     // If the king is not in check, then it's not checkmate
@@ -252,7 +251,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // Check if any move can take the king out of check
     return !allPossibleMoves.some(move => {
       // Apply each move to a hypothetical game state
-      const hypotheticalGameState = this._applyMoveToTemporaryBoard(move, gameState);
+      const hypotheticalGameState = this._applyMoveToTemporaryBoard(move);
       // Check if the king would still be in check after the move
       // TODO: Uncomment when isKingInCheck is implemented, then remove the return false
       // return !this._isKingInCheck(this._getKingPosition(currentPlayerColor, hypotheticalGameState), hypotheticalGameState, currentPlayerColor);
@@ -261,11 +260,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     });
   }
 
-  protected _applyMoveToTemporaryBoard(move: ChessMove, gameState: ChessGameState): ChessGameState {
+  protected _applyMoveToTemporaryBoard(move: ChessMove): ChessGameState {
     // Create a new game state object by copying the existing one
     const tempGameState: ChessGameState = {
-      ...gameState,
-      moves: [...gameState.moves, move], // Add the new move to the end of the moves array
+      ...this.state,
+      moves: [...this.state.moves, move], // Add the new move to the end of the moves array
     };
 
     const tempBoard = this.board;
@@ -285,14 +284,14 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     tempBoard[toRankIndex][toFileIndex] = piece;
 
     // Clear the starting square in the temporary board
-    tempBoard[fromRankIndex][fromFileIndex] = { piece: undefined, color: undefined };
+    tempBoard[fromRankIndex][fromFileIndex] = undefined;
 
     // Return the updated game state
     return tempGameState;
   }
 
   protected _isKingInCheck(
-    _arg0: Position,
+    _arg0: ChessPosition,
     _hypotheticalGameState: unknown,
     _currentPlayerColor: string,
   ) {
@@ -317,26 +316,22 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * Determines if a player can perform castling.
    * Castling is a move that involves the king and either of the original rooks.
    *
-   * @param {ChessGameState} gameState - The current state of the chess game.
    * @returns {boolean} - True if castling is possible, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid.
    */
-  public canCastle(gameState: ChessGameState): boolean {
-    const gameStated = gameState;
+  public canCastle(): boolean {
     return false; // Default return value
   }
   /**
    * Determines if en passant is possible for a given pawn position.
    * En passant is a special pawn capture that can only occur immediately after a pawn moves two squares forward from its starting position.
    *
-   * @param {ChessGameState} gameState - The current state of the chess game.
    * @param {ChessMove} lastMove - The last move made in the game, to check if it was a two-square pawn advance.
    * @returns {boolean} - True if en passant capture is possible, otherwise false.
    * @throws {Error} - Throws an error if the game state or last move is not valid.
    */
 
-  public canEnPassant(gameState: ChessGameState, lastMove: ChessMove): boolean {
-    const gameStated = gameState;
+  public canEnPassant(lastMove: ChessMove): boolean {
     const lastMoved = lastMove;
     return false; // Default return value
   }
@@ -345,12 +340,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * Determines if a pawn promotion is possible at the current position.
    * Pawn promotion occurs when a pawn reaches the farthest row from its starting position.
    *
-   * @param {ChessGameState} gameState - The current state of the chess game.
    * @returns {boolean} - True if pawn promotion is possible, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid.
    */
-  public canPromotePawn(gameState: ChessGameState): boolean {
-    const gameStated = gameState;
+  public canPromotePawn(): boolean {
     return false; // Default return value, to be implemented.
   }
 }
