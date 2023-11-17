@@ -12,12 +12,12 @@ describe('ChessGame', () => {
   describe('board', () => {
     it('should initialize with the correct starting positions', () => {
       const { board } = game.state;
-      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'white' }, color: 'W' }); // White rook at A1
-      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'white' }, color: 'W' }); // White rook at H1
-      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'black' }, color: 'B' }); // Black rook at A8
-      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'black' }, color: 'B' }); // Black rook at H8
-      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'white' }, color: 'W' }); // White Pawn at B2
-      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'black' }, color: 'B' }); // Black Pawn at G7
+      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W' } }); // White rook at A1
+      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W' } }); // White rook at H1
+      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B' } }); // Black rook at A8
+      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B' } }); // Black rook at H8
+      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W' } }); // White Pawn at B2
+      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'B' } }); // Black Pawn at G7
     });
   });
 
@@ -46,8 +46,6 @@ describe('ChessGame', () => {
       expect(blackPieces.length).toBeGreaterThan(0);
     });
   });
-  /*
-  TO DO: uncomment after join implemented
   describe('during game in progress', () => {
     let player1: Player;
     let player2: Player;
@@ -72,5 +70,4 @@ describe('ChessGame', () => {
       });
     });
   });
-  */
 });

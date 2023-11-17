@@ -164,7 +164,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         ) {
           updatedCell = {
             piece: move.gamePiece,
-            color: move.gamePiece.pieceColor,
           };
           updatedBoard[i][j] = updatedCell;
         } else if (currentCell) {
@@ -173,7 +172,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
               pieceType: currentCell.piece.pieceType,
               pieceColor: currentCell.piece.pieceColor,
             },
-            color: move.gamePiece.pieceColor,
           };
           updatedBoard[i][j] = updatedCell;
         }
@@ -237,7 +235,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       if (piece) {
         const cell: ChessCell = {
           piece,
-          color: piece.pieceColor,
         };
         board[rank - 1][fileToIndex(file)] = cell;
       }
@@ -251,7 +248,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       for (const fileKey of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
         const fileIndex = this._fileToIndex(fileKey as ChessFilePosition);
         const piece = this.state.board[rank - 1][fileIndex];
-        if (piece?.piece.pieceType === 'K' && piece.color === color) {
+        if (piece?.piece.pieceType === 'K' && piece?.piece.pieceColor === color) {
           return {
             rank: rank as ChessRankPosition,
             file: fileKey as ChessFilePosition,
@@ -279,10 +276,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
         const cell = this.state.board[rank][file];
-        if (cell && cell.color === color) {
+        if (cell && cell.piece.pieceColor === color) {
           pieces.push({
             type: cell.piece,
-            color: cell.color,
+            color: cell.piece.pieceColor,
             position: {
               rank: (rank + 1) as ChessRankPosition,
               file: this._indexToFile(file) as ChessFilePosition,
@@ -389,7 +386,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     for (let i = 0; i < 8; i++) {
       const boardRow = this.state.board[i];
       for (let j = 0; j < 8; j++) {
-        if (boardRow[j] && boardRow[j]?.color !== playerColor) {
+        if (boardRow[j] && boardRow[j]?.piece.pieceColor !== playerColor) {
           const moves = this._possibleMoves(this._rowToRank(i), this._columnToFile(j));
           for (let k = 0; k < moves.length; k++) {
             if (

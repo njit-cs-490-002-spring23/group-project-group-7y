@@ -71,7 +71,7 @@ export type ChessPiece = {
   pieceColor: 'W' | 'B';
 }; // Kings, Queens, Rooks, Bishops, Knights, Pawns
 
-export type ChessCell = { piece: ChessPiece; color: 'W' | 'B' } | undefined;
+export type ChessCell = { piece: ChessPiece } | undefined;
 /**
  * Type for the state of a Chess game
  * The state of the game is represented as a list of moves, and the playerIDs of the players (white and black)
