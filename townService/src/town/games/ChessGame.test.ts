@@ -1,4 +1,6 @@
 import ChessGame from './ChessGame';
+import { createPlayerForTesting, mockPlayer } from '../../TestUtils';
+import Player from '../../lib/Player';
 
 describe('ChessGame', () => {
   let game: ChessGame;
@@ -9,7 +11,7 @@ describe('ChessGame', () => {
 
   describe('board', () => {
     it('should initialize with the correct starting positions', () => {
-      const { board } = game;
+      const { board } = game.state;
       expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'white' }, color: 'W' }); // White rook at A1
       expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'white' }, color: 'W' }); // White rook at H1
       expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'black' }, color: 'B' }); // Black rook at A8
@@ -44,10 +46,28 @@ describe('ChessGame', () => {
       expect(blackPieces.length).toBeGreaterThan(0);
     });
   });
+  describe('during game in progress', () => {
+    let player1: Player;
+    let player2: Player;
+    beforeEach(() => {
+      player1 = createPlayerForTesting();
+      player2 = createPlayerForTesting();
+      game.join(player1);
+      game.join(player2);
+    });
+    describe('isCheckmate', () => {
+      it.skip('should return false if the king is not in check', () => {
+        expect(game.isCheckmate()).toBe(false);
+      });
+    });
 
-  describe('isCheckmate', () => {
-    it.skip('should return false if the king is not in check', () => {
-      expect(game.isCheckmate()).toBe(false);
+    describe('isKingInCheck', () => {
+      it.skip('should return false if the white king is not in check', () => {
+        expect(game.isKingInCheck(player1.id)).toBe(false);
+      });
+      it.skip('should return false if the black king is not in check', () => {
+        expect(game.isKingInCheck(player2.id)).toBe(false);
+      });
     });
   });
 });
