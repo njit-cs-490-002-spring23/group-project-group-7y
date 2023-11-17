@@ -390,7 +390,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       const boardRow = this.state.board[i];
       for (let j = 0; j < 8; j++) {
         if (boardRow[j] && boardRow[j]?.color !== playerColor) {
-          const moves = this._possibleMoves(this._rankForRow(i), this._fileForColumn(j));
+          const moves = this._possibleMoves(this._rowToRank(i), this._columnToFile(j));
           for (let k = 0; k < moves.length; k++) {
             if (
               moves[k].destinationFile === kingLocation.file &&
