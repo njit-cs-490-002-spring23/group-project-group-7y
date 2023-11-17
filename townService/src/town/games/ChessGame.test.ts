@@ -1,5 +1,5 @@
 import ChessGame from './ChessGame';
-import { createPlayerForTesting, mockPlayer } from '../../TestUtils';
+import { createPlayerForTesting } from '../../TestUtils';
 import Player from '../../lib/Player';
 
 describe('ChessGame', () => {
