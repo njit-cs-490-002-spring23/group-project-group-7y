@@ -15,7 +15,7 @@ import {
   ChessPiece,
   CHESS_BOARD_SIZE,
   PlayerID,
-} from '../../types/CoveyTownSocket';
+} from '../../types/CoveyTownSocket.d';
 import Game from './Game';
 
 /**
