@@ -13,7 +13,9 @@ import {
   ChessPosition,
   ChessCell,
   ChessPiece,
-} from '../../types/CoveyTownSocket';
+  CHESS_BOARD_SIZE,
+  PlayerID,
+} from '../../types/CoveyTownSocket.d';
 import Game from './Game';
 
 /**
@@ -23,9 +25,59 @@ import Game from './Game';
 export default class ChessGame extends Game<ChessGameState, ChessMove> {
   public constructor() {
     super({
+      board: [[]],
       moves: [],
       status: 'WAITING_TO_START',
     });
+    this.initializeChessBoard();
+  }
+
+  /*
+   * Convert file position to column index in board and return index
+   *
+   * @param {file} The chess board file
+   */
+  private _fileToColumn(file: ChessFilePosition) {
+    return file.charCodeAt(0) - 'a'.charCodeAt(0);
+  }
+
+  /*
+   * Convert rank position to index in board and return index
+   *
+   * @param rank The chess board rank
+   */
+  private _rankToRow(rank: ChessRankPosition) {
+    return CHESS_BOARD_SIZE - rank;
+  }
+
+  /*
+   * Convert column index to file position return file
+   *
+   * @param file The chess board file
+   */
+  private _columnToFile(columnIndex: number): ChessFilePosition {
+    return String.fromCharCode(columnIndex + 'a'.charCodeAt(0)) as ChessFilePosition;
+  }
+
+  /*
+   * Convert row index to chess rank and return rank
+   *
+   * @param rank The chess board rank
+   */
+  private _rowToRank(rowIndex: number): ChessRankPosition {
+    return (CHESS_BOARD_SIZE - rowIndex) as ChessRankPosition;
+  }
+
+  /**
+   * Returns the whether a given player is white or black
+   *
+   * @param player the player whose gamepieces' color is nedded
+   */
+  private _playerColor(player: PlayerID): 'W' | 'B' {
+    if (this.state.white === player) {
+      return 'W';
+    }
+    return 'B';
   }
 
   /*
@@ -44,7 +96,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param _rank The rank position
    * @param _file The file position
    */
-  protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): void {
+  protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
     // eslint-disable-next-line prettier/prettier
     throw new Error('Remove Before Implementing');
   }
@@ -95,53 +147,87 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   protected _leave(_player: Player): void {}
 
   /**
-   * Returns the current state of the board.
+   * Update the board in current game state with the given move
+   *
+   * @param move the move to update the board with
+   */
+  updateChessBoard(move: ChessMove): void {
+    const updatedBoard: ChessCell[][] = [];
+    for (let i = 0; i < CHESS_BOARD_SIZE; i++) {
+      updatedBoard.push(Array(8).fill(undefined));
+      for (let j = 0; j < CHESS_BOARD_SIZE; j++) {
+        const currentCell = this.state.board[i][j];
+        let updatedCell: ChessCell;
+        if (
+          i === this._rankToRow(move.destinationRank) &&
+          j === this._fileToColumn(move.destinationFile)
+        ) {
+          updatedCell = {
+            piece: move.gamePiece,
+          };
+          updatedBoard[i][j] = updatedCell;
+        } else if (currentCell) {
+          updatedCell = {
+            piece: {
+              pieceType: currentCell.piece.pieceType,
+              pieceColor: currentCell.piece.pieceColor,
+            },
+          };
+          updatedBoard[i][j] = updatedCell;
+        }
+      }
+    }
+    this.state.board = updatedBoard as ReadonlyArray<ChessCell[]>;
+  }
+
+  /**
+   * Returns a new chess board with all the pieces
    *
    * The board is an 8x8 array of ChessCell, which contains the piece and its color.
    * The 2-dimensional array is indexed by row and then column, so board[0][0] is the top-left cell,
    * and board[7][7] is the bottom-right cell
    */
-  get board(): ChessCell[][] {
+  initializeChessBoard(): void {
     // Initialize an 8x8 array of ChessCells with null values to represent the empty squares
     const board: ChessCell[][] = Array(8)
-      .fill(null)
-      .map(() => Array(8).fill(null));
+      .fill(undefined)
+      .map(() => Array(8).fill(undefined));
     // Function to translate file to array index
     const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
     // Initialize board with pieces in initial positions
     const initialPositions: { [key: string]: ChessPiece } = {
-      a1: { pieceType: 'R', pieceColor: 'white' },
-      b1: { pieceType: 'N', pieceColor: 'white' },
-      c1: { pieceType: 'B', pieceColor: 'white' },
-      d1: { pieceType: 'Q', pieceColor: 'white' },
-      e1: { pieceType: 'K', pieceColor: 'white' },
-      f1: { pieceType: 'B', pieceColor: 'white' },
-      g1: { pieceType: 'N', pieceColor: 'white' },
-      h1: { pieceType: 'R', pieceColor: 'white' },
-      a2: { pieceType: 'P', pieceColor: 'white' },
-      b2: { pieceType: 'P', pieceColor: 'white' },
-      c2: { pieceType: 'P', pieceColor: 'white' },
-      d2: { pieceType: 'P', pieceColor: 'white' },
-      e2: { pieceType: 'P', pieceColor: 'white' },
-      f2: { pieceType: 'P', pieceColor: 'white' },
-      g2: { pieceType: 'P', pieceColor: 'white' },
-      h2: { pieceType: 'P', pieceColor: 'white' },
-      a7: { pieceType: 'P', pieceColor: 'black' },
-      b7: { pieceType: 'P', pieceColor: 'black' },
-      c7: { pieceType: 'P', pieceColor: 'black' },
-      d7: { pieceType: 'P', pieceColor: 'black' },
-      e7: { pieceType: 'P', pieceColor: 'black' },
-      f7: { pieceType: 'P', pieceColor: 'black' },
-      g7: { pieceType: 'P', pieceColor: 'black' },
-      h7: { pieceType: 'P', pieceColor: 'black' },
-      a8: { pieceType: 'R', pieceColor: 'black' },
-      b8: { pieceType: 'N', pieceColor: 'black' },
-      c8: { pieceType: 'B', pieceColor: 'black' },
-      d8: { pieceType: 'Q', pieceColor: 'black' },
-      e8: { pieceType: 'K', pieceColor: 'black' },
-      f8: { pieceType: 'B', pieceColor: 'black' },
-      g8: { pieceType: 'N', pieceColor: 'black' },
-      h8: { pieceType: 'R', pieceColor: 'black' },
+      a1: { pieceType: 'R', pieceColor: 'W' },
+      b1: { pieceType: 'N', pieceColor: 'W' },
+      c1: { pieceType: 'B', pieceColor: 'W' },
+      d1: { pieceType: 'Q', pieceColor: 'W' },
+      e1: { pieceType: 'K', pieceColor: 'W' },
+      f1: { pieceType: 'B', pieceColor: 'W' },
+      g1: { pieceType: 'N', pieceColor: 'W' },
+      h1: { pieceType: 'R', pieceColor: 'W' },
+      a2: { pieceType: 'P', pieceColor: 'W' },
+      b2: { pieceType: 'P', pieceColor: 'W' },
+      c2: { pieceType: 'P', pieceColor: 'W' },
+      d2: { pieceType: 'P', pieceColor: 'W' },
+      e2: { pieceType: 'P', pieceColor: 'W' },
+      f2: { pieceType: 'P', pieceColor: 'W' },
+      g2: { pieceType: 'P', pieceColor: 'W' },
+      h2: { pieceType: 'P', pieceColor: 'W' },
+      a7: { pieceType: 'P', pieceColor: 'B' },
+      b7: { pieceType: 'P', pieceColor: 'B' },
+      c7: { pieceType: 'P', pieceColor: 'B' },
+      d7: { pieceType: 'P', pieceColor: 'B' },
+      e7: { pieceType: 'P', pieceColor: 'B' },
+      f7: { pieceType: 'P', pieceColor: 'B' },
+      g7: { pieceType: 'P', pieceColor: 'B' },
+      h7: { pieceType: 'P', pieceColor: 'B' },
+      a8: { pieceType: 'R', pieceColor: 'B' },
+      b8: { pieceType: 'N', pieceColor: 'B' },
+      c8: { pieceType: 'B', pieceColor: 'B' },
+      d8: { pieceType: 'Q', pieceColor: 'B' },
+      e8: { pieceType: 'K', pieceColor: 'B' },
+      f8: { pieceType: 'B', pieceColor: 'B' },
+      g8: { pieceType: 'N', pieceColor: 'B' },
+      h8: { pieceType: 'R', pieceColor: 'B' },
     };
     Object.entries(initialPositions).forEach(([key, piece]) => {
       const file = key[0] as ChessFilePosition;
@@ -149,21 +235,20 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       if (piece) {
         const cell: ChessCell = {
           piece,
-          color: piece.pieceColor === 'white' ? 'W' : 'B',
         };
         board[rank - 1][fileToIndex(file)] = cell;
       }
     });
 
-    return board;
+    this.state.board = board as ReadonlyArray<ChessCell[]>;
   }
 
   protected _getKingPosition(color: 'W' | 'B'): ChessPosition {
     for (let rank = 1; rank <= 8; rank++) {
       for (const fileKey of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
         const fileIndex = this._fileToIndex(fileKey as ChessFilePosition);
-        const piece = this.board[rank - 1][fileIndex];
-        if (piece?.piece.pieceType === 'K' && piece.color === color) {
+        const piece = this.state.board[rank - 1][fileIndex];
+        if (piece?.piece.pieceType === 'K' && piece?.piece.pieceColor === color) {
           return {
             rank: rank as ChessRankPosition,
             file: fileKey as ChessFilePosition,
@@ -190,11 +275,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const pieces: PieceWithPosition[] = [];
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
-        const cell = this.board[rank][file];
-        if (cell && cell.color === color) {
+        const cell = this.state.board[rank][file];
+        if (cell && cell.piece.pieceColor === color) {
           pieces.push({
             type: cell.piece,
-            color: cell.color,
+            color: cell.piece.pieceColor,
             position: {
               rank: (rank + 1) as ChessRankPosition,
               file: this._indexToFile(file) as ChessFilePosition,
@@ -267,7 +352,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       moves: [...this.state.moves, move], // Add the new move to the end of the moves array
     };
 
-    const tempBoard = this.board;
+    const tempBoard = this.state.board;
 
     // Translate the files to indices
     const fromFileIndex = this._fileToIndex(move.currentFile);
@@ -290,12 +375,31 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return tempGameState;
   }
 
-  protected _isKingInCheck(
-    _arg0: ChessPosition,
-    _hypotheticalGameState: unknown,
-    _currentPlayerColor: string,
-  ) {
-    throw new Error('Method not implemented.');
+  /**
+   * Returns whether a certain player is in check
+   *
+   * @param player the player to check if in check
+   */
+  public isKingInCheck(player: PlayerID) {
+    const playerColor = this._playerColor(player);
+    const kingLocation = this._getKingPosition(playerColor);
+    for (let i = 0; i < 8; i++) {
+      const boardRow = this.state.board[i];
+      for (let j = 0; j < 8; j++) {
+        if (boardRow[j] && boardRow[j]?.piece.pieceColor !== playerColor) {
+          const moves = this._possibleMoves(this._rowToRank(i), this._columnToFile(j));
+          for (let k = 0; k < moves.length; k++) {
+            if (
+              moves[k].destinationFile === kingLocation.file &&
+              moves[k].destinationRank === kingLocation.rank
+            ) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**

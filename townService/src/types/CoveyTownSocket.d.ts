@@ -55,7 +55,7 @@ export interface GameMove<MoveType> {
  *  The destination position of the gamePiece is specified by destinationRank and destinationFile
  */
 export interface ChessMove {
-  gamePiece: 'p' | 'b' | 'n' | 'r' | 'k' | 'q';
+  gamePiece: ChessPiece;
   currentRank: ChessRankPosition;
   currentFile: ChessFilePosition;
   destinationRank: ChessRankPosition;
@@ -65,19 +65,20 @@ export interface ChessMove {
 export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type ChessFilePosition = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
-
+export const CHESS_BOARD_SIZE = 8;
 export type ChessPiece = {
   pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
-  pieceColor: 'white' | 'black';
+  pieceColor: 'W' | 'B';
 }; // Kings, Queens, Rooks, Bishops, Knights, Pawns
 
-export type ChessCell = { piece: ChessPiece; color: 'W' | 'B' } | undefined;
+export type ChessCell = { piece: ChessPiece } | undefined;
 /**
  * Type for the state of a Chess game
  * The state of the game is represented as a list of moves, and the playerIDs of the players (white and black)
  * The first player to join the game is white, the second is black
  */
 export interface ChessGameState extends WinnableGameState {
+  board: ReadonlyArray<ChessCell[]>;
   moves: ReadonlyArray<ChessMove>;
   white?: PlayerID;
   black?: PlayerID;
