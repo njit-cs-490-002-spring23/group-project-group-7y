@@ -68,7 +68,7 @@ describe('ChessGame', () => {
         );
       });
       it('should respond with the next best move for the start board', async () => {
-        const move = await game.bestMove();
+        const move = await game.nextBestMove();
         expect(move).toEqual({
           gamePiece: 'P',
           currentRank: 2,

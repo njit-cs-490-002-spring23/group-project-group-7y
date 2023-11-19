@@ -172,7 +172,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param move The move to apply to the game
    * @throws APIConnectionError if cannot acces the API
    */
-  public async bestMove(): Promise<ChessMove> {
+  public async nextBestMove(): Promise<ChessMove> {
     const apiEndpoint = 'https://stockfish.online/api/stockfish.php';
     const requestURL = `${apiEndpoint}?fen=${encodeURIComponent(
       this.fenNotation(),
