@@ -1,6 +1,7 @@
 import ChessGame from './ChessGame';
 import { createPlayerForTesting } from '../../TestUtils';
 import Player from '../../lib/Player';
+import { ChessMove } from '../../types/CoveyTownSocket';
 
 describe('ChessGame', () => {
   let game: ChessGame;
@@ -60,7 +61,23 @@ describe('ChessGame', () => {
         expect(game.isCheckmate()).toBe(false);
       });
     });
-
+    describe('bestMove', () => {
+      it('should produce the correct fen for the starting board', () => {
+        expect(game.fenNotation()).toEqual(
+          'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        );
+      });
+      it('should respond with the next best move for the start board', async () => {
+        const move = await game.bestMove();
+        expect(move).toEqual({
+          gamePiece: 'P',
+          currentRank: 2,
+          currentFile: 'd',
+          destinationRank: 4,
+          destinationFile: 'd',
+        } as unknown as Promise<ChessMove>);
+      });
+    });
     describe('isKingInCheck', () => {
       it.skip('should return false if the white king is not in check', () => {
         expect(game.isKingInCheck(player1.id)).toBe(false);
