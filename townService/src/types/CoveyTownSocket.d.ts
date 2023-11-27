@@ -60,12 +60,14 @@ export interface ChessMove {
   currentFile: ChessFilePosition;
   destinationRank: ChessRankPosition;
   destinationFile: ChessFilePosition;
+  enPassant?: boolean;
 }
 
 export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type ChessFilePosition = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
-export const CHESS_BOARD_SIZE = 8;
+
+export const API_CONNECTION_ERROR = 'Cannot connect to StockfishOnline API';
 export type ChessPiece = {
   pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
   pieceColor: 'W' | 'B';
@@ -82,6 +84,7 @@ export interface ChessGameState extends WinnableGameState {
   moves: ReadonlyArray<ChessMove>;
   white?: PlayerID;
   black?: PlayerID;
+  halfMoves: number;
 }
 
 export interface ChessPosition {

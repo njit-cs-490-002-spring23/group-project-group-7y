@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-throw-literal */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { fetchMiddlewares } from 'tsoa';
+import axios from 'axios';
 import Player from '../../lib/Player';
 import {
   GameMove,
@@ -13,10 +15,12 @@ import {
   ChessPosition,
   ChessCell,
   ChessPiece,
-  CHESS_BOARD_SIZE,
   PlayerID,
+  API_CONNECTION_ERROR,
 } from '../../types/CoveyTownSocket.d';
 import Game from './Game';
+
+export const CHESS_BOARD_SIZE = 8;
 
 /**
  * A ChessGame is a Game that implements the rules of Chess.
@@ -28,6 +32,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       board: [[]],
       moves: [],
       status: 'WAITING_TO_START',
+      halfMoves: 0,
     });
     this.initializeChessBoard();
   }
@@ -68,6 +73,14 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return (CHESS_BOARD_SIZE - rowIndex) as ChessRankPosition;
   }
 
+  /*
+   * Returns whose turn (W or B) it is
+   *
+   */
+  private _whoseTurn(): string {
+    return this.state.moves.length % 2 === 0 ? 'W' : 'B';
+  }
+
   /**
    * Returns the whether a given player is white or black
    *
@@ -80,15 +93,113 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return 'B';
   }
 
+  /**
+   * Returns the FEN notation for the current game state
+   *
+   * @see https://www.chess.com/terms/fen-chess
+   */
+  public fenNotation(): string {
+    let fen = '';
+    let emptySquareCount = 0;
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const currentCell: ChessCell = this.state.board[i][j];
+        if (!currentCell) {
+          emptySquareCount++;
+        } else {
+          if (emptySquareCount > 0) {
+            fen += emptySquareCount;
+            emptySquareCount = 0;
+          }
+          if (currentCell.piece.pieceColor === 'W') {
+            const fenPiece = currentCell.piece.pieceType?.toLowerCase();
+            fen += fenPiece;
+          } else {
+            const fenPiece = currentCell.piece.pieceType;
+            fen += fenPiece;
+          }
+        }
+      }
+      if (emptySquareCount > 0) {
+        fen += emptySquareCount;
+        emptySquareCount = 0;
+      }
+      if (i < 8 - 1) {
+        fen += '/';
+      }
+    }
+
+    fen += ` ${this._whoseTurn().toLowerCase()} `;
+
+    let noCastlingPossible = true;
+    if (this.canCastle('W', 'K')) {
+      fen += 'K';
+      noCastlingPossible = false;
+    }
+    if (this.canCastle('W', 'K')) {
+      fen += 'Q';
+      noCastlingPossible = false;
+    }
+    if (this.canCastle('B', 'K')) {
+      fen += 'k';
+      noCastlingPossible = false;
+    }
+    if (this.canCastle('B', 'Q')) {
+      fen += 'q';
+      noCastlingPossible = false;
+    }
+    if (noCastlingPossible) {
+      fen += '-';
+    }
+
+    fen += ' ';
+    const lastMove = this.state.moves.at(-1);
+    if (lastMove && lastMove.enPassant) {
+      if (lastMove.gamePiece.pieceColor === 'W') {
+        fen += `${lastMove.gamePiece.pieceType}3 `;
+      } else fen += `${lastMove.gamePiece.pieceType}6 `;
+    } else fen += '- ';
+
+    fen += `${this.state.halfMoves} `;
+
+    fen += `${Math.floor(this.state.moves.length / 2) + 1}`;
+    return fen;
+  }
+
   /*
    * Makes API request to obtain best possible move for current game state and returns the move
    *
    * @param move The move to apply to the game
-   * @throws InvalidParametersError if the move is invalid (with specific message noted above)
+   * @throws APIConnectionError if cannot acces the API
    */
-  protected _bestMove(): GameMove<ChessMove> {
-    // eslint-disable-next-line prettier/prettier
-    throw new Error('Remove Before Implementing');
+  public async nextBestMove(): Promise<ChessMove> {
+    const apiEndpoint = 'https://stockfish.online/api/stockfish.php';
+    const requestURL = `${apiEndpoint}?fen=${encodeURIComponent(
+      this.fenNotation(),
+    )}&depth=10&mode=bestmove`;
+
+    return axios
+      .get(requestURL)
+      .then(response => {
+        const { data } = response.data;
+        const curFile = data[9];
+        const curRank = parseInt(data[10], 10);
+        const destFile = data[11];
+        const destRank = parseInt(data[12], 10);
+        const pieceRow = this._rankToRow(curRank as ChessRankPosition);
+        const pieceCol = this._fileToColumn(curFile as ChessFilePosition);
+        const piece = this.state.board[pieceRow][pieceCol]?.piece.pieceType;
+        return {
+          gamePiece: piece,
+          currentRank: curRank,
+          currentFile: curFile,
+          destinationRank: destRank,
+          destinationFile: destFile,
+        } as unknown as Promise<ChessMove>;
+      })
+      .catch(() => {
+        throw new Error(API_CONNECTION_ERROR);
+      });
   }
 
   /**
@@ -415,15 +526,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
-   * Determines if a player can perform castling.
+   * Determines if a player ('W' or 'B') can perform castling on 'K' or 'Q' side
    * Castling is a move that involves the king and either of the original rooks.
-   *
+   * TODO: remove _ from parameters after implementation
    * @returns {boolean} - True if castling is possible, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid.
    */
-  public canCastle(): boolean {
-    return false; // Default return value
+  public canCastle(_player: 'W' | 'B', _side: 'K' | 'Q'): boolean {
+    return true; // Default return value
   }
+
   /**
    * Determines if en passant is possible for a given pawn position.
    * En passant is a special pawn capture that can only occur immediately after a pawn moves two squares forward from its starting position.
