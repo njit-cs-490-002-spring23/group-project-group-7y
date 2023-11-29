@@ -17,15 +17,6 @@ export type TownEmitter = BroadcastOperator<ServerToClientEvents, SocketData>;
 export type TownEmitterFactory = (townID: string) => TownEmitter;
 
 export type InteractableType = 'ConversationArea' | 'ViewingArea' | 'ChessArea';
-export type PlayerID = string;
-
-export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER';
-/**
- * Base type for the state of a game
- */
-export interface GameState {
-  status: GameStatus;
-}
 
 /**
  * Type for the state of a game that can be won
@@ -98,39 +89,9 @@ export interface PieceWithPosition {
   position: Position;
 }
 
-export type InteractableID = string;
-export type GameInstanceID = string;
-
 /**
  * Type for the result of a game
  */
-export interface GameResult {
-  moves: ReadonlyArray<ChessMove>;
-  gameID: GameInstanceID;
-  scores: { [playerName: string]: number };
-}
-
-/**
- * Base type for an *instance* of a game. An instance of a game
- * consists of the present state of the game (which can change over time),
- * the players in the game, and the result of the game
- * @see GameState
- */
-export interface GameInstance<T extends GameState> {
-  state: T;
-  id: GameInstanceID;
-  players: PlayerID[];
-  result?: GameResult;
-}
-
-/**
- * Base type for an area that can host a game
- * @see GameInstance
- */
-export interface GameArea<T extends GameState> extends Interactable {
-  game: GameInstance<T> | undefined;
-  history: GameResult[];
-}
 
 export type CommandID = string;
 
