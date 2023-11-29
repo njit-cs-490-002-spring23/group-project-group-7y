@@ -85,3 +85,43 @@ export interface ClientToServerEvents {
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
 }
+
+export type PlayerID = string;
+export type InteractableID = string;
+export type GameInstanceID = string;
+
+export interface GameResult {
+  moves: ReadonlyArray<ChessMove>;
+  gameID: GameInstanceID;
+  scores: { [playerName: string]: number };
+}
+
+/**
+ * Base type for an *instance* of a game. An instance of a game
+ * consists of the present state of the game (which can change over time),
+ * the players in the game, and the result of the game
+ * @see GameState
+ */
+export interface GameInstance<T extends GameState> {
+  state: T;
+  id: GameInstanceID;
+  players: PlayerID[];
+  result?: GameResult;
+}
+
+/**
+ * Base type for an area that can host a game
+ * @see GameInstance
+ */
+export interface GameArea<T extends GameState> extends Interactable {
+  game: GameInstance<T> | undefined;
+  history: GameResult[];
+}
+
+export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER';
+/**
+ * Base type for the state of a game
+ */
+export interface GameState {
+  status: GameStatus;
+}
