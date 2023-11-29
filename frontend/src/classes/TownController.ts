@@ -586,33 +586,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       return newController;
     }
   }
-  /**
-   * Retrives the game area controller corresponding to a game area by ID, or
-   * throws an error if the game area controller does not exist
-   *
-   * @param gameArea
-   * @returns
-   */
-  public getGameAreaController<GameType extends GameState, EventsType extends GameEventTypes>(
-    gameArea: GameArea,
-  ): GameAreaController<GameType, EventsType> {
-    const existingController = this._interactableControllers.find(
-      eachExistingArea => eachExistingArea.id === gameArea.name,
-    );
-    if (existingController instanceof GameAreaController) {
-      return existingController as GameAreaController<GameType, EventsType>;
-    } else {
-      throw new Error('Game area controller not created');
-    }
-  }
-  /**
-   * Emit a viewing area update to the townService
-   * @param viewingArea The Viewing Area Controller that is updated and should be emitted
-   *    with the event
-   */
-  public emitViewingAreaUpdate(viewingArea: ViewingAreaController) {
-    this._socket.emit('interactableUpdate', viewingArea.viewingAreaModel());
-  }
 
   /**
    * Determine which players are "nearby" -- that they should be included in our video call
@@ -670,27 +643,6 @@ export function useTownSettings() {
     };
   }, [townController]);
   return { friendlyName, isPubliclyListed };
-}
-
-/**
- * A react hook to retrieve an interactable area controller
- *
- * This function will throw an error if the interactable area controller does not exist.
- *
- * This hook relies on the TownControllerContext.
- *
- * @param interactableAreaID The ID of the interactable area to retrieve the controller for
- * @throws Error if there is no interactable area controller matching the specified ID
- */
-export function useInteractableAreaController<T>(interactableAreaID: string): T {
-  const townController = useTownController();
-  const interactableAreaController = townController.gameAreas.find(
-    eachArea => eachArea.id == interactableAreaID,
-  );
-  if (!interactableAreaController) {
-    throw new Error(`Requested interactable area ${interactableAreaID} does not exist`);
-  }
-  return interactableAreaController as unknown as T;
 }
 
 /**
