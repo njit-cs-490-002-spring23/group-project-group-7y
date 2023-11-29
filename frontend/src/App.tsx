@@ -17,6 +17,7 @@ import TownMap from './components/Town/TownMap';
 import TownControllerContext from './contexts/TownControllerContext';
 import LoginControllerContext from './contexts/LoginControllerContext';
 import { TownsServiceClient } from './generated/client';
+import ChessArea from '../src/components/Town/interactables/Chess/ChessArea';
 
 function App() {
   const [townController, setTownController] = useState<TownController | null>(null);
@@ -32,6 +33,7 @@ function App() {
     page = (
       <TownControllerContext.Provider value={townController}>
         <ChatProvider>
+          {/* <ChessArea /> Uncomment this for testing*/}
           <TownMap />
           <VideoOverlay preferredMode='fullwidth' />
         </ChatProvider>
