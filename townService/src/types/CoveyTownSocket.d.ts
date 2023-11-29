@@ -7,7 +7,11 @@ besides type declarations could become problematic from a compilation perspectiv
 
 import { BroadcastOperator, Socket } from 'socket.io';
 /* eslint-disable import/no-relative-packages */
-import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types/CoveyTownSocket';
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  GameState,
+} from '../../../shared/types/CoveyTownSocket';
 /* eslint-disable import/no-relative-packages */
 export * from '../../../shared/types/CoveyTownSocket';
 
@@ -17,15 +21,6 @@ export type TownEmitter = BroadcastOperator<ServerToClientEvents, SocketData>;
 export type TownEmitterFactory = (townID: string) => TownEmitter;
 
 export type InteractableType = 'ConversationArea' | 'ViewingArea' | 'ChessArea';
-export type PlayerID = string;
-
-export type GameStatus = 'IN_PROGRESS' | 'WAITING_TO_START' | 'OVER';
-/**
- * Base type for the state of a game
- */
-export interface GameState {
-  status: GameStatus;
-}
 
 /**
  * Type for the state of a game that can be won
@@ -60,12 +55,14 @@ export interface ChessMove {
   currentFile: ChessFilePosition;
   destinationRank: ChessRankPosition;
   destinationFile: ChessFilePosition;
+  enPassant?: boolean;
 }
 
 export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type ChessFilePosition = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
-export const CHESS_BOARD_SIZE = 8;
+
+export const API_CONNECTION_ERROR = 'Cannot connect to StockfishOnline API';
 export type ChessPiece = {
   pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
   pieceColor: 'W' | 'B';
@@ -82,6 +79,7 @@ export interface ChessGameState extends WinnableGameState {
   moves: ReadonlyArray<ChessMove>;
   white?: PlayerID;
   black?: PlayerID;
+  halfMoves: number;
 }
 
 export interface ChessPosition {
@@ -95,39 +93,9 @@ export interface PieceWithPosition {
   position: Position;
 }
 
-export type InteractableID = string;
-export type GameInstanceID = string;
-
 /**
  * Type for the result of a game
  */
-export interface GameResult {
-  moves: ReadonlyArray<ChessMove>;
-  gameID: GameInstanceID;
-  scores: { [playerName: string]: number };
-}
-
-/**
- * Base type for an *instance* of a game. An instance of a game
- * consists of the present state of the game (which can change over time),
- * the players in the game, and the result of the game
- * @see GameState
- */
-export interface GameInstance<T extends GameState> {
-  state: T;
-  id: GameInstanceID;
-  players: PlayerID[];
-  result?: GameResult;
-}
-
-/**
- * Base type for an area that can host a game
- * @see GameInstance
- */
-export interface GameArea<T extends GameState> extends Interactable {
-  game: GameInstance<T> | undefined;
-  history: GameResult[];
-}
 
 export type CommandID = string;
 
