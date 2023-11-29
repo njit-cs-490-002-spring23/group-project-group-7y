@@ -7,7 +7,11 @@ besides type declarations could become problematic from a compilation perspectiv
 
 import { BroadcastOperator, Socket } from 'socket.io';
 /* eslint-disable import/no-relative-packages */
-import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types/CoveyTownSocket';
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  GameState,
+} from '../../../shared/types/CoveyTownSocket';
 /* eslint-disable import/no-relative-packages */
 export * from '../../../shared/types/CoveyTownSocket';
 
