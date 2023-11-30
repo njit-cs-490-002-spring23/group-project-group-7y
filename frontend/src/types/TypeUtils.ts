@@ -21,5 +21,5 @@ export function isViewingArea(interactable: Interactable): interactable is Viewi
 }
 
 export function isChessArea(interactable: Interactable): interactable is GameArea<ChessGameState> {
-  return interactable.type === 'ChesseArea';
+  return 'history' in interactable;
 }
