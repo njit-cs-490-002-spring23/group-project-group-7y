@@ -20,7 +20,7 @@ db.exec(
 export const databaseUpdate = {
   getLeaderBoardRow: (username: string) =>
     db.get('SELECT * FROM leaderboard WHERE username = ?', username),
-  addUser: (username: string, wins: number, ties: number, losses: number) => 
+  addUser: (username: string, wins: number, ties: number, losses: number) =>
     db.run(
       'INSERT OR REPLACE INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)',
       username,
