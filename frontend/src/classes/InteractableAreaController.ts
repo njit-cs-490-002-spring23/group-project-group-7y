@@ -5,8 +5,8 @@ import {
   Interactable as InteractableAreaModel,
   InteractableID,
   PlayerID,
-} from '../../types/CoveyTownSocket';
-import PlayerController from '../PlayerController';
+} from '../types/CoveyTownSocket';
+import PlayerController from './PlayerController';
 
 export type BaseInteractableEventMap = EventMap & {
   occupantsChange: (newOccupants: PlayerController[]) => void;
