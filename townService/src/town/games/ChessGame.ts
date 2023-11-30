@@ -18,6 +18,7 @@ import {
   PlayerID,
   API_CONNECTION_ERROR,
 } from '../../types/CoveyTownSocket.d';
+import { db, LeaderBoardRow } from './database/chessDatabase';
 import Game from './Game';
 
 export const CHESS_BOARD_SIZE = 8;
@@ -559,5 +560,61 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
   public canPromotePawn(): boolean {
     return false; // Default return value, to be implemented.
+  }
+  /**\
+   * Updates the database to include the winner of the game state
+   * If the username of the player is not found, insert the player into the leaderboard with their username, wins, ties and losses
+   * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
+   */
+  public updateLeaderBoard(): void {
+    let winPlayer1 = 0;
+    let winPlayer2 = 0;
+    let lossPlayer1 = 0;
+    let lossPlayer2 = 0;
+    let tiePlayer1 = 0;
+    let tiePlayer2 = 0;
+
+    const result = db.get('SELECT username FROM leaderboard WHERE username = ?', this._players[0].userName);
+    const result2 = db.get('SELECT username FROM leaderboard WHERE username = ?', this._players[1].userName);
+
+    if (result === undefined) {
+      if (this.state.winner === undefined && this.state.status === 'OVER') {
+        tiePlayer1 += 1;
+      } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
+        winPlayer1 +=1;
+      } else {
+        lossPlayer1 +=1;
+      }
+
+      db.run('INSERT INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)', this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
+    }
+    else {
+      if (this.state.winner === undefined && this.state.status === 'OVER') {
+        db.run('UPDATE leaderboard SET ties = ties + 1 WHERE username = ?', this._players[0].userName);
+      } else if (this.state.winner === this._players[0].userName && this.state.status === 'OVER') {
+        db.run('UPDATE leaderboard SET wins = wins + 1 WHERE username = ?', this._players[0].userName);
+      } else {
+        db.run('UPDATE leaderboard SET losses = losses + 1 WHERE username = ?', this._players[0].userName);
+      }
+    }
+  
+    if (result2 === undefined) {
+      if (this.state.winner === undefined && this.state.status === 'OVER') {
+        tiePlayer2 += 1;
+      } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
+        winPlayer2 += 1;
+      } else {
+        lossPlayer2 += 1;
+      }
+      db.run('INSERT INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)', this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
+    } else {
+      if (this.state.winner === undefined && this.state.status === 'OVER') {
+        db.run('UPDATE leaderboard SET ties = ties + 1 WHERE username = ?', this._players[1].userName);
+      } else if (this.state.winner === this._players[1].userName && this.state.status === 'OVER') {
+        db.run('UPDATE leaderboard SET wins = wins + 1 WHERE username = ?', this._players[1].userName);
+      } else {
+        db.run('UPDATE leaderboard SET losses = losses + 1 WHERE username = ?', this._players[1].userName);
+      }
+    }
   }
 }
