@@ -567,7 +567,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If the username of the player is not found, insert the player into the leaderboard with their username, wins, ties and losses
    * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
    */
-  public updateLeaderBoard(): Promise<void> {
+  public updateLeaderBoard(): void {
     let winPlayer1 = 0;
     let winPlayer2 = 0;
     let lossPlayer1 = 0;
@@ -584,18 +584,15 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
         winPlayer1 += 1;
       } else {
-        lossPlayer1 +=1;
+        lossPlayer1 += 1;
       }
       databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
-    }
-    else {
-      if (this.state.winner === undefined && this.state.status === 'OVER') {
-        databaseUpdate.updateLeaderBoardRow(this._players[0].userName, "ties")
-      } else if (this.state.winner === this._players[0].userName && this.state.status === 'OVER') {
-        databaseUpdate.updateLeaderBoardRow(this._players[0].userName, "wins")
-      } else {
-        databaseUpdate.updateLeaderBoardRow(this._players[0].userName, "losses")
-      }
+    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
+    } else if (this.state.winner === this._players[0].userName && this.state.status === 'OVER') {
+      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
+    } else {
+      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
     }
     if (result2 === undefined) {
       if (this.state.winner === undefined && this.state.status === 'OVER') {
@@ -606,13 +603,12 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         lossPlayer2 += 1;
       }
       databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
-    } else if (this.state.winner === undefined && this.state.status === 'OVER' {
-        databaseUpdate.updateLeaderBoardRow(this._players[1].userName, "ties")
-      } else if (this.state.winner === this._players[1].userName && this.state.status === 'OVER') {
-        databaseUpdate.updateLeaderBoardRow(this._players[1].userName, "wins")
-      } else {
-        databaseUpdate.updateLeaderBoardRow(this._players[1].userName, "losses")
-      }
+    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
+    } else if (this.state.winner === this._players[1].userName && this.state.status === 'OVER') {
+      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
+    } else {
+      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
     }
   }
 }
