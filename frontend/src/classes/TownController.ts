@@ -12,7 +12,6 @@ import useTownController from '../hooks/useTownController';
 import {
   ChatMessage,
   CoveyTownSocket,
-  GameState,
   PlayerLocation,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
@@ -21,7 +20,7 @@ import { isChessArea, isConversationArea, isViewingArea } from '../types/TypeUti
 import ConversationAreaController from './ConversationAreaController';
 import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
-import GameAreaController, { GameEventTypes } from './interactable/GameAreaController';
+import GameAreaController from './interactable/GameAreaController';
 import ChessAreaController from './interactable/ChessAreaController';
 import GameArea from '../components/Town/interactables/GameArea';
 

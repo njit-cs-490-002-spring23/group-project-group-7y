@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Table, Tbody, Tr, Td } from '@chakra-ui/react';
+import { Box, Button } from '@chakra-ui/react';
 /**
  * A component that renders a list of GameResult's as a leaderboard, formatted as a table.
  * Columns: Wins, Losses, Ties, Player (Name)

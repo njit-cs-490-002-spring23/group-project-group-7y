@@ -8,7 +8,9 @@ import {
 } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 import TownController from '../TownController';
-import InteractableAreaController, { BaseInteractableEventMap } from '../InteractableAreaController';
+import InteractableAreaController, {
+  BaseInteractableEventMap,
+} from '../InteractableAreaController';
 
 export type GameEventTypes = BaseInteractableEventMap & {
   gameStart: () => void;
