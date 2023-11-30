@@ -635,7 +635,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     if (existingController instanceof ViewingAreaController) {
       return existingController;
     } else {
-      // throw new Error(`No such viewing area controller ${existingController}`);
+      throw new Error(`No such viewing area controller ${existingController}`);
     }
   }
 

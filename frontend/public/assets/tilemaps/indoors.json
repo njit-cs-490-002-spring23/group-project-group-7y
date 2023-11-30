@@ -499,10 +499,10 @@
                  "y":1104.66683333333
                 }, 
                 {
-                 "type":"GameArea",
+                 "type":"ConversationArea",
                  "height":125.333,
                  "id":29,
-                 "name":"Chess Game",
+                 "name":"Basement Lounge",
                  "rotation":0,
                  "visible":true,
                  "width":134.000333333333,
