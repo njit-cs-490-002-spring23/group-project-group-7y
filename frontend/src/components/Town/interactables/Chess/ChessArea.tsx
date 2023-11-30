@@ -1,7 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalCloseButton, ModalHeader } from '@chakra-ui/react';
-import Leaderboard from './Leaderboard';
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalCloseButton,
+  ModalHeader,
+  Box,
+  Button,
+  Table,
+  Tbody,
+  Td,
+  Tr,
+} from '@chakra-ui/react';
+import Leaderboard, { LeaderBoardProp } from './Leaderboard';
 import useTownController from '../../../../hooks/useTownController';
 import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
@@ -10,8 +22,15 @@ import GameAreaInteractable from '../GameArea';
 
 function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.Element {
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
+  const [currentPage, setcurrentPage] = useState('mainMenu');
   const townController = useTownController();
 
+  const mainMenuPage = () => {
+    setcurrentPage('mainMenu');
+  };
+  const leaderboardPage = () => {
+    setcurrentPage('leaderboard');
+  };
   useEffect(() => {
     // Fetch chess game results (for now, using dummy data)
     const results = generateDummyChessResults();
@@ -19,11 +38,37 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   }, []);
 
   // Modal to display the leaderboard
-  return (
-    <>
-      <Leaderboard results={chessResults} />
-    </>
-  );
+  if (currentPage === 'mainMenu') {
+    return (
+      <Box
+        width='100%'
+        maxWidth='100%'
+        overflowX='auto'
+        background={`url('/assets/397848.jpg') no-repeat center/cover`}
+        p={4}
+        color='black'
+        minHeight='400px'>
+        <Box as='header' textAlign='center' mb={4} bg='orange'>
+          <h2>Main Menu</h2>
+        </Box>
+
+        <Button
+          style={{ marginLeft: '50%', marginTop: '10%' }}
+          bg='green'
+          color='white'
+          onClick={() => leaderboardPage()}
+          variant='outline'>
+          Leaderbaord
+        </Button>
+      </Box>
+    );
+  } else {
+    return (
+      <>
+        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
+      </>
+    );
+  }
 }
 
 /**
@@ -38,8 +83,9 @@ export default function ChessAreaWrapper(): JSX.Element {
   const closeModal = useCallback(() => {
     if (gameArea) {
       townController.interactEnd(gameArea);
-      const controller = townController.getGameAreaController(gameArea);
+      /*const controller = townController.getGameAreaController(gameArea);
       controller.leaveGame();
+      */
     }
   }, [townController, gameArea]);
 
