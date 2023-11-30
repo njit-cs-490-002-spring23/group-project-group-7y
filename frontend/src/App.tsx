@@ -17,6 +17,9 @@ import TownMap from './components/Town/TownMap';
 import TownControllerContext from './contexts/TownControllerContext';
 import LoginControllerContext from './contexts/LoginControllerContext';
 import { TownsServiceClient } from './generated/client';
+// TODO: Remove later, This line will be used for testing while we get things set up
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import ChessArea from '../src/components/Town/interactables/Chess/ChessArea';
 
 function App() {
   const [townController, setTownController] = useState<TownController | null>(null);
@@ -32,6 +35,7 @@ function App() {
     page = (
       <TownControllerContext.Provider value={townController}>
         <ChatProvider>
+          {/* <ChessArea /> Uncomment this for testing*/}
           <TownMap />
           <VideoOverlay preferredMode='fullwidth' />
         </ChatProvider>
