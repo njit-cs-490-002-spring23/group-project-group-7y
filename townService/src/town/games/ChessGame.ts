@@ -260,7 +260,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       throw new InvalidParametersError('Invalid Move');
     }
   }
-  
+
   // Checks if the desination and pieces on the way are empty
   private _checkIfEmpty(
     currRank: number,
