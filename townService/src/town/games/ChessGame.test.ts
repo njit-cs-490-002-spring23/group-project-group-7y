@@ -467,7 +467,7 @@ describe('ChessGame', () => {
           playerID: player2.id,
           move: move2,
         });
-  
+
         const move3: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'N' },
           currentRank: 3,
