@@ -288,7 +288,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           return 'Your piece is in the way';
         }
         return 'Capture Possible';
-      } 
+      }
     }
     return 'Error';
   }
@@ -367,7 +367,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
             playerColor,
           );
 
-          // if result equals empty then the move is valid. 
+          // if result equals empty then the move is valid.
           if (result === 'Empty') {
             return true;
           }
@@ -544,7 +544,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     }
     return false;
   }
-  
+
   /**
    * Adds a player to the game.
    * Updates the game's state to reflect the new player.
@@ -891,7 +891,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     ) {
       return true;
     }
-    return false; 
+    return false;
   }
 
   /**
