@@ -21,7 +21,7 @@ export default function TownMap(): JSX.Element {
         mode: Phaser.Scale.ScaleModes.WIDTH_CONTROLS_HEIGHT,
         autoRound: true,
       },
-      width: 800,
+      width: 1600,
       height: 600,
       fps: { target: 30 },
       physics: {
