@@ -174,12 +174,16 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
     if (!this._instanceID || !this.isActive()) throw new Error(exports.NO_GAME_IN_PROGRESS_ERROR);
     else {
       await this._townController.sendInteractableCommand(this.id, {
-        gamePiece: gamePiece,
-        currentRank: currentRank,
-        currentFile: currentFile,
-        destinationRank: destinationRank,
-        destinationFile: destinationFile,
-        enPassant: enPassant,
+        gameID: this._instanceID,
+        move: {
+          gamePiece: gamePiece,
+          currentRank: currentRank,
+          currentFile: currentFile,
+          destinationRank: destinationRank,
+          destinationFile: destinationFile,
+          enPassant: enPassant,
+        },
+        type: 'GameMove',
       });
     }
   }

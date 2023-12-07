@@ -445,6 +445,11 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
           eachArea => eachArea.id === interactable.id,
         );
         updatedViewingArea?.updateFrom(interactable);
+      } else {
+        const updatedGameareaArea = this._gameAreas.find(
+          eachArea => eachArea.id === interactable.id,
+        );
+        updatedGameareaArea?.updateFrom(interactable, interactable.occupantsByID());
       }
     });
   }

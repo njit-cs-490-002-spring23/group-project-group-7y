@@ -208,7 +208,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param _rank The rank position
    * @param _file The file position
    */
-  protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
+  public possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
     // eslint-disable-next-line prettier/prettier
     throw new Error('Remove Before Implementing');
   }
@@ -499,7 +499,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       const boardRow = this.state.board[i];
       for (let j = 0; j < 8; j++) {
         if (boardRow[j] && boardRow[j]?.piece.pieceColor !== playerColor) {
-          const moves = this._possibleMoves(this._rowToRank(i), this._columnToFile(j));
+          const moves = this.possibleMoves(this._rowToRank(i), this._columnToFile(j));
           for (let k = 0; k < moves.length; k++) {
             if (
               moves[k].destinationFile === kingLocation.file &&
