@@ -209,7 +209,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param _rank The rank position
    * @param _file The file position
    */
-  protected _possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
+  public possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
     // eslint-disable-next-line prettier/prettier
     throw new Error('Remove Before Implementing');
   }
@@ -759,27 +759,31 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
 
   public isCheckmate(): boolean {
-    // Determine the current player's color based on the number of moves
+    // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
-    // Find the king's position for the current player
-    const kingPosition = this._getKingPosition(currentPlayerColor);
-    // If the king is not in check, then it's not checkmate
-    // TODO: Uncomment when isKingInCheck is implemented
-    // if (!this._isKingInCheck(kingPosition, gameState, currentPlayerColor)) {
-    //   return false;
-    // }
+    // Check if the king is currently in check
+    if (!this.isKingInCheck(currentPlayerColor)) {
+      return false;
+    }
     // Get all possible moves for the current player
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
-    // Check if any move can take the king out of check
-    return !allPossibleMoves.some(move => {
-      // Apply each move to a hypothetical game state
-      const hypotheticalGameState = this._applyMoveToTemporaryBoard(move);
-      // Check if the king would still be in check after the move
-      // TODO: Uncomment when isKingInCheck is implemented, then remove the return false
-      // return !this._isKingInCheck(this._getKingPosition(currentPlayerColor, hypotheticalGameState), hypotheticalGameState, currentPlayerColor);
-      // Default return for now
-      return false;
-    });
+    // Test each move to see if it can take the king out of check
+    for (const move of allPossibleMoves) {
+      // Backup the current state
+      const originalState = { ...this.state };
+      // Apply the move temporarily
+      this.updateChessBoard(move);
+      // Check if the king is still in check after the move
+      const stillInCheck = this.isKingInCheck(currentPlayerColor);
+      // Restore the original state
+      this.state = originalState;
+      // If the king is not in check after this move, it's not checkmate
+      if (!stillInCheck) {
+        return false;
+      }
+    }
+    // If no move gets the king out of check, it's checkmate
+    return true;
   }
 
   protected _applyMoveToTemporaryBoard(move: ChessMove): ChessGameState {
@@ -824,7 +828,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       const boardRow = this.state.board[i];
       for (let j = 0; j < 8; j++) {
         if (boardRow[j] && boardRow[j]?.piece.pieceColor !== playerColor) {
-          const moves = this._possibleMoves(this._rowToRank(i), this._columnToFile(j));
+          const moves = this.possibleMoves(this._rowToRank(i), this._columnToFile(j));
           for (let k = 0; k < moves.length; k++) {
             if (
               moves[k].destinationFile === kingLocation.file &&

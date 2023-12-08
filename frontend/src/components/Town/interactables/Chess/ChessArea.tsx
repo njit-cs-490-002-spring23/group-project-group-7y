@@ -83,6 +83,7 @@ export default function ChessAreaWrapper(): JSX.Element {
   const closeModal = useCallback(() => {
     if (gameArea) {
       townController.interactEnd(gameArea);
+      //TODO: uncomment and attach controller later
       /*const controller = townController.getGameAreaController(gameArea);
       controller.leaveGame();
       */
@@ -96,7 +97,7 @@ export default function ChessAreaWrapper(): JSX.Element {
         <ModalContent>
           <ModalHeader>{gameArea.name}</ModalHeader>
           <ModalCloseButton />
-          <ChessArea interactableID={gameArea.name} />;
+          <ChessArea interactableID={gameArea.name} />
         </ModalContent>
       </Modal>
     );
