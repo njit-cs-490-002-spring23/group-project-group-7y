@@ -1002,5 +1002,6 @@ describe('ChessGame', () => {
         ).toThrow('Invalid Move');
         expect(game.state.moves.length).toEqual(0);
       });
+    });
   });
 });
