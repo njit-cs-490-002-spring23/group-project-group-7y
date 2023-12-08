@@ -262,7 +262,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   // Checks if the desination and pieces on the way are empty
-  private _checkIfEmpty(
+  private _checkChessCells(
     currRank: number,
     currFile: number,
     destRank: number,
@@ -294,9 +294,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
-   *
-   * @param move recieve move and determines whether it is a valid move in context with the information provided
-   * @returns true or false depending on if the move is valid or not
+   * @param {ChessMove} move - determines whether the move is valid or not depending on its piece and movement factors for destination rank and file
+   * @returns {boolean} true if the move is valid, or false if not.
    * to do: implement checks for king movement for castling and whether the king is in check or checkmate
    */
   private _validateGamePieceMovement(move: GameMove<ChessMove>): boolean {
@@ -359,7 +358,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           }
           // checks if the cell is empty.
 
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -379,7 +378,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           (destToRank === currInRank + 1 && playerColor === 'W') ||
           (destToRank === currInRank - 1 && playerColor === 'B')
         ) {
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -444,7 +443,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           if (diffRank !== diffFile) {
             return false;
           }
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -467,7 +466,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           ((destFileNumber === currFileNumber + 1 || destFileNumber === currFileNumber - 1) &&
             (destToRank === currInRank + 1 || destToRank === currInRank - 1))
         ) {
-          const val2 = this._checkIfEmpty(
+          const val2 = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -494,7 +493,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           (destToRank === currInRank && destFileNumber !== currFileNumber) ||
           (destFileNumber === currFileNumber && destToRank !== currFileNumber)
         ) {
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -509,7 +508,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           if (diffFile !== diffRank) {
             return false;
           }
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -526,7 +525,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           (destToRank === currInRank && destFileNumber !== currFileNumber) ||
           (destFileNumber === currFileNumber && destToRank !== currInRank)
         ) {
-          result = this._checkIfEmpty(
+          result = this._checkChessCells(
             currInRank,
             currFileNumber,
             destToRank,
@@ -554,17 +553,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @throws InvalidParametersError if the player is already in the game (PLAYER_ALREADY_IN_GAME_MESSAGE)
    *  or the game is full (GAME_FULL_MESSAGE)
    */
-  public _join(_player: Player): void {
-    if (this._players.length === 0) {
+  public _join(player: Player): void {
+    if (this.players.length === 0) {
       this.state.white = _player.id;
-      this.state.black = undefined;
       this.state.status = 'WAITING_TO_START';
     }
-    if (this._players.length === 1) {
+    if (this.players.length === 1) {
       this.state.black = _player.id;
       this.state.status = 'IN_PROGRESS';
     }
-    if (this._players.length >= 2) {
+    if (this.players.length >= 2) {
       if (this.state.white === _player.id || this.state.black === _player.id) {
         throw new InvalidParametersError('PLAYER_ALREADY_IN_GAME_MESSAGE');
       }
@@ -869,8 +867,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * En passant is a special pawn capture that can only occur immediately after a pawn moves two squares forward from its starting position.
    *
    * @param {ChessMove} lastMove - The last move made in the game, to check if it was a two-square pawn advance.
+   * @param {ChessMove} currentMove - The current move being made, check if the previous move is in the same rank and the difference in file is by 1
    * @returns {boolean} - True if en passant capture is possible, otherwise false.
-   * @throws {Error} - Throws an error if the game state or last move is not valid.
    */
 
   public canEnPassant(lastMove: ChessMove, currentMove: ChessMove): boolean {
