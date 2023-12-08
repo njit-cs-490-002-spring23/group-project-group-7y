@@ -21,7 +21,10 @@ export default function MainMenu(): JSX.Element {
         <h2>Main Menu</h2>
       </Box>
       <Button style={{ marginLeft: 'auto' }} bg='green' color='white' variant='outline'>
-        Leaderbaord
+        Leaderboard
+      </Button>
+      <Button style={{ marginLeft: 'auto' }} bg='green' color='white' variant='outline'>
+        Game Review
       </Button>
     </Box>
   );
