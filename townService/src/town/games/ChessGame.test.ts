@@ -86,5 +86,63 @@ describe('ChessGame', () => {
         expect(game.isKingInCheck(player2.id)).toBe(false);
       });
     });
+    describe('isCheckmate', () => {
+      // Remove .skip after possibleMoves
+      it.skip('should return false if the king is not in checkmate (e.g., starting position)', () => {
+        game = new ChessGame();
+        expect(game.isCheckmate()).toBe(false);
+      });
+      // Remove .skip after possibleMoves
+      it.skip("should return true when the king is in checkmate (Fool's Mate)", () => {
+        const whitePlayerId = 'player1Id';
+        const blackPlayerId = 'player2Id';
+        // Simulate the moves leading to Fool's Mate
+        game.applyMove({
+          playerID: whitePlayerId,
+          move: {
+            gamePiece: { pieceType: 'P', pieceColor: 'W' },
+            currentRank: 2,
+            currentFile: 'f',
+            destinationRank: 3,
+            destinationFile: 'f',
+          },
+          gameID: '123',
+        });
+        game.applyMove({
+          playerID: blackPlayerId,
+          move: {
+            gamePiece: { pieceType: 'P', pieceColor: 'B' },
+            currentRank: 7,
+            currentFile: 'e',
+            destinationRank: 5,
+            destinationFile: 'e',
+          },
+          gameID: '123',
+        });
+        game.applyMove({
+          playerID: whitePlayerId,
+          move: {
+            gamePiece: { pieceType: 'P', pieceColor: 'W' },
+            currentRank: 2,
+            currentFile: 'g',
+            destinationRank: 4,
+            destinationFile: 'g',
+          },
+          gameID: '123',
+        });
+        game.applyMove({
+          playerID: blackPlayerId,
+          move: {
+            gamePiece: { pieceType: 'Q', pieceColor: 'B' },
+            currentRank: 8,
+            currentFile: 'h',
+            destinationRank: 4,
+            destinationFile: 'h',
+          },
+          gameID: '123',
+        }); // Checkmate
+        expect(game.isCheckmate()).toBe(true);
+      });
+    });
   });
 });
