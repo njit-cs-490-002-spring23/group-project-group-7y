@@ -554,16 +554,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    *  or the game is full (GAME_FULL_MESSAGE)
    */
   public _join(player: Player): void {
-    if (this.players.length === 0) {
-      this.state.white = _player.id;
+    if (this._players.length === 0) {
+      this.state.white = player.id;
       this.state.status = 'WAITING_TO_START';
     }
-    if (this.players.length === 1) {
-      this.state.black = _player.id;
+    if (this._players.length === 1) {
+      this.state.black = player.id;
       this.state.status = 'IN_PROGRESS';
     }
-    if (this.players.length >= 2) {
-      if (this.state.white === _player.id || this.state.black === _player.id) {
+    if (this._players.length >= 2) {
+      if (this.state.white === player.id || this.state.black === player.id) {
         throw new InvalidParametersError('PLAYER_ALREADY_IN_GAME_MESSAGE');
       }
       throw new InvalidParametersError('GAME_FULL_MESSAGE');
