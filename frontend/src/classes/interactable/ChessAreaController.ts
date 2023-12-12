@@ -6,6 +6,7 @@ import {
   ChessFilePosition,
   ChessPiece,
   ChessRankPosition,
+  PlayerID,
 } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 import GameAreaController, { GameEventTypes } from './GameAreaController';
@@ -39,14 +40,14 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
   /**
    * Returns the player with the 'X' game piece, if there is one, or undefined otherwise
    */
-  get x(): PlayerController | undefined {
+  get white(): PlayerController | undefined {
     return this._players.find(eachPlayer => eachPlayer.id === this._model.game?.state.white);
   }
 
   /**
    * Returns the player with the 'O' game piece, if there is one, or undefined otherwise
    */
-  get o(): PlayerController | undefined {
+  get black(): PlayerController | undefined {
     return this._players.find(eachPlayer => eachPlayer.id === this._model.game?.state.black);
   }
 
@@ -71,7 +72,7 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    */
   get whoseTurn(): PlayerController | undefined {
     if (this._model.game && this._model.game.state.status === 'IN_PROGRESS') {
-      return this.moveCount % 2 === 0 ? this.x : this.o;
+      return this.moveCount % 2 === 0 ? this.white : this.black;
     }
     return undefined;
   }
@@ -90,7 +91,9 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * Returns true if the current player is a player in this game
    */
   get isPlayer(): boolean {
-    return this._townController.ourPlayer === this.x || this._townController.ourPlayer === this.o;
+    return (
+      this._townController.ourPlayer === this.white || this._townController.ourPlayer === this.black
+    );
   }
 
   /**
@@ -98,9 +101,9 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    *
    * Throws an error PLAYER_NOT_IN_GAME_ERROR if the current player is not a player in this game
    */
-  get gamePiece(): 'X' | 'O' {
+  get gamePiece(): 'W' | 'B' {
     if (!this.isPlayer) throw new Error(PLAYER_NOT_IN_GAME_ERROR);
-    return this._townController.ourPlayer.id === this.x?.id ? 'X' : 'O';
+    return this._townController.ourPlayer.id === this.white?.id ? 'W' : 'B';
   }
 
   /**

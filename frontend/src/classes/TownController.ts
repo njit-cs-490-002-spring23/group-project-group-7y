@@ -202,6 +202,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
   private _gameAreas: ChessAreaController[] = [];
 
+  public get gameAreas() {
+    return this._gameAreas;
+  }
+
   public constructor({ userName, townID, loginController }: ConnectionProperties) {
     super();
     this._townID = townID;
@@ -446,10 +450,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         );
         updatedViewingArea?.updateFrom(interactable);
       } else {
-        const updatedGameareaArea = this._gameAreas.find(
-          eachArea => eachArea.id === interactable.id,
-        );
-        updatedGameareaArea?.updateFrom(interactable, interactable.occupantsByID());
+        const updatedGameArea = this._gameAreas.find(eachArea => eachArea.id === interactable.id);
+        updatedGameArea?.updateFrom(interactable, interactable.occupantsByID());
       }
     });
   }
@@ -608,8 +610,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
         this._conversationAreas = [];
         this._viewingAreas = [];
+        this._gameAreas = [];
         initialData.interactables.forEach(eachInteractable => {
-          if (isConversationArea(eachInteractable)) {
+          if (isChessArea(eachInteractable)) {
+            this._gameAreas.push(
+              new ChessAreaController(eachInteractable.id, eachInteractable, this),
+            );
+          } else if (isConversationArea(eachInteractable)) {
             this._conversationAreasInternal.push(
               ConversationAreaController.fromConversationAreaModel(
                 eachInteractable,
@@ -618,10 +625,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
             );
           } else if (isViewingArea(eachInteractable)) {
             this._viewingAreas.push(new ViewingAreaController(eachInteractable));
-          } else if (isChessArea(eachInteractable)) {
-            this._gameAreas.push(
-              new ChessAreaController(eachInteractable.id, eachInteractable, this),
-            );
           }
         });
         this._userID = initialData.userID;
@@ -646,7 +649,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     const existingController = this._gameAreas.find(
       eachExistingArea => eachExistingArea.id === gameArea.name,
     );
-    if (existingController instanceof GameAreaController) {
+    if (existingController) {
       return existingController as ChessAreaController;
     } else {
       throw new Error('Game area controller not created');
@@ -853,6 +856,28 @@ export function useInteractable<T extends Interactable>(
   }, [interactableType, townController, setInteractable]);
   return interactable;
 }
+
+/**
+ * A react hook to retrieve an interactable area controller
+ *
+ * This function will throw an error if the interactable area controller does not exist.
+ *
+ * This hook relies on the TownControllerContext.
+ *
+ * @param interactableAreaID The ID of the interactable area to retrieve the controller for
+ * @throws Error if there is no interactable area controller matching the specified ID
+ */
+export function useInteractableAreaController<T>(interactableAreaID: string): T {
+  const townController = useTownController();
+  const interactableAreaController = townController.gameAreas.find(
+    eachArea => eachArea.id == interactableAreaID,
+  );
+  if (!interactableAreaController) {
+    throw new Error(`Requested interactable area ${interactableAreaID} does not exist`);
+  }
+  return interactableAreaController as unknown as T;
+}
+
 /**
  * A react hook to retrieve the players that should be included in the video call
  *

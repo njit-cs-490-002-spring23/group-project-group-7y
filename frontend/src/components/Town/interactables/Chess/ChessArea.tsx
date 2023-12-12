@@ -12,15 +12,95 @@ import {
   Tbody,
   Td,
   Tr,
+  useToast,
+  Container,
+  chakra,
 } from '@chakra-ui/react';
 import Leaderboard, { LeaderBoardProp } from './Leaderboard';
+import Multiplayer from './Multiplayer';
 import useTownController from '../../../../hooks/useTownController';
 import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
-import { useInteractable } from '../../../../classes/TownController';
+import { useInteractable, useInteractableAreaController } from '../../../../classes/TownController';
 import GameAreaInteractable from '../GameArea';
+import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
+
+export type ChessGameProp = {
+  gameAreaController: ChessAreaController;
+  mainMenuPage: () => void;
+};
+
+/**
+ * A component that will render a single cell in the Chess board, styled
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const HomeScreenButton = chakra(Button, {
+  baseStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexBasis: '33%',
+    height: '30px',
+    color: 'green',
+    width: '175px',
+    fontSize: '20px',
+    margin: '5px',
+  },
+});
+
+/**
+ * Creates and returns the Multiplayer button
+ * If the game is in status WAITING_TO_START or OVER, a button to join the game is displayed, with the text 'Join New Game'
+ *    - Clicking the button calls the joinGame method on the gameAreaController
+ *    - Before calling joinGame method, the button is disabled and has the property isLoading set to true, and is re-enabled when the method call completes
+ *    - If the method call fails, a toast is displayed with the error message as the description of the toast (and status 'error')
+ *    - Once the player joins the game, the button dissapears
+ *  @param gameAreaController the controller for the TicTacToe game
+ * @returns the JSX.Element with possibly a button
+ */
+function JoinButton({ gameAreaController, mainMenuPage }: ChessGameProp): JSX.Element {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [buttonText, setButtonText] = useState('Join Multiplayer');
+  let button: JSX.Element;
+  const displayToast = useToast();
+  if (!gameAreaController.isPlayer && gameAreaController.status !== 'IN_PROGRESS') {
+    button = (
+      <HomeScreenButton
+        bg='green'
+        color='white'
+        variant='outline'
+        isLoading={isLoading}
+        disabled={isDisabled}
+        onClick={async (event: { currentTarget: { remove: () => void } }) => {
+          setIsDisabled(true);
+          setIsLoading(true);
+          setButtonText('Loading');
+          await gameAreaController
+            .joinGame()
+            .then(() => {
+              mainMenuPage();
+            })
+            .catch(e => {
+              mainMenuPage();
+              displayToast({
+                title: 'Join Failed',
+                description: `Error: ${(e as Error).message}`,
+                status: 'error',
+              });
+            });
+          setIsDisabled(false);
+          setIsLoading(false);
+          setButtonText('Join Multiplayer');
+        }}>
+        {buttonText}
+      </HomeScreenButton>
+    );
+  } else button = <> </>;
+  return button;
+}
 
 function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.Element {
+  const gameAreaController = useInteractableAreaController<ChessAreaController>(interactableID);
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
   const [currentPage, setcurrentPage] = useState('mainMenu');
   const townController = useTownController();
@@ -31,14 +111,29 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const leaderboardPage = () => {
     setcurrentPage('leaderboard');
   };
+  const multiplayerPage = () => {
+    setcurrentPage('multiplayer');
+  };
   useEffect(() => {
     // Fetch chess game results (for now, using dummy data)
     const results = generateDummyChessResults();
     setChessResults(results);
   }, []);
 
-  // Modal to display the leaderboard
-  if (currentPage === 'mainMenu') {
+  //diaplay proper page
+  if (currentPage === 'leaderboard') {
+    return (
+      <>
+        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else if (currentPage === 'multiplayer') {
+    return (
+      <>
+        <Multiplayer gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else {
     return (
       <Box
         width='100%'
@@ -51,22 +146,17 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
         <Box as='header' textAlign='center' mb={4} bg='orange'>
           <h2>Main Menu</h2>
         </Box>
-
-        <Button
-          style={{ marginLeft: '50%', marginTop: '10%' }}
-          bg='green'
-          color='white'
-          onClick={() => leaderboardPage()}
-          variant='outline'>
-          Leaderbaord
-        </Button>
+        <Container width='50%' style={{ marginLeft: '45%', marginTop: '25%' }}>
+          <JoinButton mainMenuPage={mainMenuPage} gameAreaController={gameAreaController} />
+          <HomeScreenButton
+            bg='green'
+            color='white'
+            onClick={() => leaderboardPage()}
+            variant='outline'>
+            Leaderbaord
+          </HomeScreenButton>
+        </Container>
       </Box>
-    );
-  } else {
-    return (
-      <>
-        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
-      </>
     );
   }
 }
@@ -79,14 +169,13 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
  */
 export default function ChessAreaWrapper(): JSX.Element {
   const gameArea = useInteractable<GameAreaInteractable>('gameArea');
+  console.log(gameArea);
   const townController = useTownController();
   const closeModal = useCallback(() => {
     if (gameArea) {
       townController.interactEnd(gameArea);
-      //TODO: uncomment and attach controller later
-      /*const controller = townController.getGameAreaController(gameArea);
+      const controller = townController.getGameAreaController(gameArea);
       controller.leaveGame();
-      */
     }
   }, [townController, gameArea]);
 
