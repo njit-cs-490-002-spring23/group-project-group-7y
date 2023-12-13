@@ -6,7 +6,6 @@ import {
   ChessFilePosition,
   ChessPiece,
   ChessRankPosition,
-  PlayerID,
 } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 import GameAreaController, { GameEventTypes } from './GameAreaController';
