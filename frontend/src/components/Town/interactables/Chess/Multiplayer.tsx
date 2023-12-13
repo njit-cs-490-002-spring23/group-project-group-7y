@@ -60,7 +60,7 @@ export default function Multiplayer(props: {
   }, [gameAreaController]);
   const townController = useTownController();
   let opponent: string;
-  
+
   if (gameAreaController.status === 'IN_PROGRESS') {
     if (gameAreaController.white?.id === townController.ourPlayer.id) {
       opponent = gameAreaController.black?.userName;
@@ -80,42 +80,36 @@ export default function Multiplayer(props: {
         <StyledChessBoard justifyContent='center'>
           {gameBoard.map((row, rowIndex) => {
             console.log(row);
-            return (
-              <Stack direction='row' margin='0' key={rowIndex}>
-                {row.map((cell, colIndex) => {
-                  const color = cell?.piece.pieceColor;
-                  const type = cell?.piece.pieceType;
-                  console.log(
-                    `url('/assets/chessPieces/${color}_${type}.png') no-repeat center/cover`,
-                  );
+            return row.map((cell, colIndex) => {
+              const color = cell?.piece.pieceColor;
+              const type = cell?.piece.pieceType;
+              console.log(`url('/assets/chessPieces/${color}_${type}.png') no-repeat center/cover`);
 
-                  let squareColor: string;
-                  if (rowIndex % 2 === 0) {
-                    if (colIndex % 2 === 0) {
-                      squareColor = 'white';
-                    } else {
-                      squareColor = 'green';
-                    }
-                  } else {
-                    if (colIndex % 2 === 1) {
-                      squareColor = 'white';
-                    } else {
-                      squareColor = 'green';
-                    }
-                  }
-                  return (
-                    <StyledChessSquare
-                      background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
-                      onClick={async () => {}}
-                      isDisabled={!ourTurn}
-                      key={colIndex}
-                      bgColor={squareColor}
-                      opacity='0.9'
-                      aria-label={`Cell ${rowIndex},${colIndex}`}></StyledChessSquare>
-                  );
-                })}
-              </Stack>
-            );
+              let squareColor: string;
+              if (rowIndex % 2 === 0) {
+                if (colIndex % 2 === 0) {
+                  squareColor = 'white';
+                } else {
+                  squareColor = 'green';
+                }
+              } else {
+                if (colIndex % 2 === 1) {
+                  squareColor = 'white';
+                } else {
+                  squareColor = 'green';
+                }
+              }
+              return (
+                <StyledChessSquare
+                  background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
+                  onClick={async () => {}}
+                  isDisabled={!ourTurn}
+                  key={colIndex}
+                  bgColor={squareColor}
+                  opacity='0.9'
+                  aria-label={`Cell ${rowIndex},${colIndex}`}></StyledChessSquare>
+              );
+            });
           })}
         </StyledChessBoard>
       </Container>
