@@ -94,7 +94,7 @@ export default function Multiplayer(props: {
               {row.map((cell, colIndex) => {
                 const color = cell?.piece.pieceColor;
                 const type = cell?.piece.pieceType;
-                const squareColor = (rowIndex + colIndex) % 2 === 0 ? 'white' : 'green';
+                const squareColor = (rowIndex + colIndex) % 2 === 0 ? '#e8edcf' : '#7c995b';
                 return (
                   <StyledChessSquare
                     id={`${rowIndex},${colIndex}`}
