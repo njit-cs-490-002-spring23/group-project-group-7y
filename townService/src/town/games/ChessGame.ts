@@ -939,8 +939,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return false;
   }
 
-
-
   /**
    * Updates the database to include the winner of the game state
    * If the username of the player is not found, insert the player into the leaderboard with their username, wins, ties and losses
