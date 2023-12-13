@@ -1021,16 +1021,20 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     throw new Error('King not found');
   }
 
-  // TODO: change _color to color, and uncomment code when possibleMoves is done.
-  protected _getAllPossibleMoves(_color: 'W' | 'B'): ChessMove[] {
-    // const pieces = this._getPieces(color);
-    // let moves: ChessMove[] = [];
-    // pieces.forEach(piece => {
-    //   moves = moves.concat(this._possibleMoves(piece.position.rank, piece.position.file));
-    // });
-
-    // return moves;
-    return [];
+  protected _getAllPossibleMoves(color: 'W' | 'B'): ChessMove[] {
+    const allMoves: ChessMove[] = [];
+    for (let rank = 1; rank <= CHESS_BOARD_SIZE; rank++) {
+      for (let file = 0; file < CHESS_BOARD_SIZE; file++) {
+        const chessFile = this._indexToFile(file) as ChessFilePosition;
+        const chessRank = rank as ChessRankPosition;
+        const cell = this.state.board[this._rankToRow(chessRank)][file];
+        if (cell && cell.piece.pieceColor === color) {
+          const moves = this.possibleMoves(chessRank, chessFile);
+          allMoves.push(...moves);
+        }
+      }
+    }
+    return allMoves;
   }
 
   protected _getPieces(color: 'W' | 'B'): PieceWithPosition[] {
@@ -1086,20 +1090,22 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   public isCheckmate(): boolean {
     // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
-    // Check if the king is currently in check
+
     if (!this.isKingInCheck(currentPlayerColor)) {
       return false;
     }
-    // Get all possible moves for the current player
+
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
+
     // Test each move to see if it can take the king out of check
     for (const move of allPossibleMoves) {
       // Backup the current state
       const originalState = { ...this.state };
       // Apply the move temporarily
       this.updateChessBoard(move);
-      // Check if the king is still in check after the move
+
       const stillInCheck = this.isKingInCheck(currentPlayerColor);
+
       // Restore the original state
       this.state = originalState;
       // If the king is not in check after this move, it's not checkmate
@@ -1437,7 +1443,17 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
 
   public isStalemate(): boolean {
-    return false; // Default return value
+    // Determine the current player's color
+    const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
+
+    if (this.isKingInCheck(currentPlayerColor)) {
+      return false;
+    }
+
+    const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
+
+    // If there are no legal moves, it's a stalemate
+    return allPossibleMoves.length === 0;
   }
 
   /**
@@ -1502,14 +1518,31 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
-   * Determines if a pawn promotion is possible at the current position.
-   * Pawn promotion occurs when a pawn reaches the farthest row from its starting position.
+   * Promotes a pawn to a new piece if it reaches the opposite end of the board.
    *
-   * @returns {boolean} - True if pawn promotion is possible, otherwise false.
-   * @throws {Error} - Throws an error if the game state is not valid.
+   * @param pawnPosition The current position of the pawn to be promoted.
+   * @param newPiece The new piece type to which the pawn is to be promoted.
+   * @returns {boolean} - Returns true if promotion was successful, false otherwise.
    */
-  public canPromotePawn(): boolean {
-    return false; // Default return value, to be implemented.
+  public promotePawn(pawnPosition: ChessPosition, newPiece: ChessPiece): boolean {
+    const { rank, file } = pawnPosition;
+    const pawnCell = this.state.board[this._rankToRow(rank)][this._fileToColumn(file)];
+    // Check if the cell contains a pawn and it is in the correct position for promotion
+    if (
+      pawnCell &&
+      pawnCell.piece.pieceType === 'P' &&
+      ((pawnCell.piece.pieceColor === 'B' && rank === 8) ||
+        (pawnCell.piece.pieceColor === 'W' && rank === 1))
+    ) {
+      // Promote the pawn
+      this.state.board[this._rankToRow(rank)][this._fileToColumn(file)] = {
+        piece: newPiece,
+      };
+      return true;
+    }
+
+    // Return false if promotion is not valid
+    return false;
   }
 
   /**

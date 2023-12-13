@@ -18,7 +18,7 @@ import InvalidParametersError, {
 } from '../../lib/InvalidParametersError';
 
 /**
- * A ChessGameArea is a GameArea that hosts a TicTacToeGame.
+ * A ChessGameArea is a GameArea that hosts a Chess Game.
  * @see ChessGame
  * @see GameArea
  */
