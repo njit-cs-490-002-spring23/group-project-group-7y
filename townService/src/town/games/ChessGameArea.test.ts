@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import { mock } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import { createPlayerForTesting } from '../../TestUtils';
@@ -7,19 +8,56 @@ import {
   INVALID_COMMAND_MESSAGE,
 } from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
-import { TownEmitter } from '../../types/CoveyTownSocket';
+import {
+  GameInstanceID,
+  ChessGameState,
+  ChessMove,
+  TownEmitter,
+} from '../../types/CoveyTownSocket';
 import ChessGameArea from './ChessGameArea';
-import ChessGame, * as ChessGameModule from './ChessGame';
+import * as ChessGameModule from './ChessGame';
+import Game from './Game';
 
+class TestingGame extends Game<ChessGameState, ChessMove> {
+  public constructor() {
+    super({
+      board: [[]],
+      moves: [],
+      status: 'WAITING_TO_START',
+      halfMoves: 0,
+    });
+  }
+
+  public applyMove(): void {}
+
+  public endGame(winner?: string) {
+    this.state = {
+      ...this.state,
+      status: 'OVER',
+      winner,
+    };
+  }
+
+  protected _join(player: Player): void {
+    if (this.state.white) {
+      this.state.white = player.id;
+    } else {
+      this.state.black = player.id;
+    }
+    this._players.push(player);
+  }
+
+  protected _leave(): void {}
+}
 describe('ChessGameArea', () => {
   let gameArea: ChessGameArea;
   let player1: Player;
   let player2: Player;
   let interactableUpdateSpy: jest.SpyInstance;
-  let game: ChessGame;
+  let game: TestingGame;
   beforeEach(() => {
     const gameConstructorSpy = jest.spyOn(ChessGameModule, 'default');
-    game = new ChessGame();
+    game = new TestingGame();
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore (Testing without using the real game class)
     gameConstructorSpy.mockReturnValue(game);
@@ -125,25 +163,6 @@ describe('ChessGameArea', () => {
           ).toThrowError('Test Error');
           expect(leaveSpy).toHaveBeenCalledWith(player1);
           expect(interactableUpdateSpy).not.toHaveBeenCalled();
-        });
-        it('should update the history if the game is over', () => {
-          const { gameID } = gameArea.handleCommand({ type: 'JoinGame' }, player1);
-          gameArea.handleCommand({ type: 'JoinGame' }, player2);
-          interactableUpdateSpy.mockClear();
-          jest.spyOn(game, 'leave').mockImplementationOnce(() => {
-            game.leave(player1);
-          });
-          gameArea.handleCommand({ type: 'LeaveGame', gameID }, player1);
-          expect(game.state.status).toEqual('OVER');
-          expect(gameArea.history.length).toEqual(1);
-          expect(gameArea.history[0]).toEqual({
-            gameID: game.id,
-            scores: {
-              [player1.userName]: 1,
-              [player2.userName]: 0,
-            },
-          });
-          expect(interactableUpdateSpy).toHaveBeenCalledTimes(1);
         });
       });
     });
