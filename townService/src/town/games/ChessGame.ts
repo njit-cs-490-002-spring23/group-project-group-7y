@@ -856,9 +856,20 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
 
   public isStalemate(): boolean {
-    return false; // Default return value
-  }
+    // Determine the current player's color
+    const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
 
+    // Check if the king is currently not in check
+    if (this.isKingInCheck(currentPlayerColor)) {
+      return false;
+    }
+
+    // Get all possible moves for the current player
+    const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
+
+    // If there are no legal moves, it's a stalemate
+    return allPossibleMoves.length === 0;
+  }
   /**
    * Determines if a player ('W' or 'B') can perform castling on 'K' or 'Q' side
    * Castling is a move that involves the king and either of the original rooks.
