@@ -859,12 +859,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
 
-    // Check if the king is currently not in check
     if (this.isKingInCheck(currentPlayerColor)) {
       return false;
     }
 
-    // Get all possible moves for the current player
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
 
     // If there are no legal moves, it's a stalemate
