@@ -24,6 +24,7 @@ import { generateDummyChessResults } from './DummyResults';
 import { useInteractable, useInteractableAreaController } from '../../../../classes/TownController';
 import GameAreaInteractable from '../GameArea';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
+import GameReview from './GameReview';
 
 export type ChessGameProp = {
   gameAreaController: ChessAreaController;
@@ -46,7 +47,35 @@ const HomeScreenButton = chakra(Button, {
     margin: '5px',
   },
 });
+type GameHistories = {
+  [key: string]: {
+    date: string;
+    opponent: string;
+    result: string;
+    moves: string[];
+  };
+};
 
+const FAKE_GAMES = [
+  {
+    date: '2023-04-01',
+    opponent: 'PlayerOne',
+    result: 'Win',
+    id: 'game1',
+  },
+  {
+    date: '2023-04-02',
+    opponent: 'PlayerTwo',
+    result: 'Loss',
+    id: 'game2',
+  },
+  {
+    date: '2023-04-03',
+    opponent: 'PlayerThree',
+    result: 'Tie',
+    id: 'game3',
+  },
+];
 /**
  * Creates and returns the Multiplayer button
  * If the game is in status WAITING_TO_START or OVER, a button to join the game is displayed, with the text 'Join New Game'
@@ -121,6 +150,9 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const multiplayerPage = () => {
     setcurrentPage('multiplayer');
   };
+  const gameReviewPage = () => {
+    setcurrentPage('gamereview');
+  };
   useEffect(() => {
     // Fetch chess game results (for now, using dummy data)
     const results = generateDummyChessResults();
@@ -138,6 +170,12 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
     return (
       <>
         <Multiplayer gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else if (currentPage === 'gamereview') {
+    return (
+      <>
+        <GameReview mainMenu={mainMenuPage} games={FAKE_GAMES} />
       </>
     );
   } else {
@@ -164,7 +202,14 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
             color='white'
             onClick={() => leaderboardPage()}
             variant='outline'>
-            Leaderbaord
+            Leaderboard
+          </HomeScreenButton>
+          <HomeScreenButton
+            bg='green'
+            color='white'
+            onClick={() => gameReviewPage()}
+            variant='outline'>
+            Game Review
           </HomeScreenButton>
         </Container>
       </Box>
