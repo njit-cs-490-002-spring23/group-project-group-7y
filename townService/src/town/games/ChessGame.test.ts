@@ -139,6 +139,7 @@ describe('ChessGame', () => {
         expect(game.isKingInCheck(player2.id)).toBe(false);
       });
     });
+
     describe('Given a possible moves check', () => {
       it('should give the right moves for a pawn', () => {
         const moves = game.possibleMoves(2, 'a');
@@ -283,6 +284,7 @@ describe('ChessGame', () => {
         expect(game.state.board[move4.destinationRank - 1][3]?.piece.pieceType).toEqual('P');
 
         const move5: ChessMove = {
+
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 5,
           currentFile: 'e',
@@ -497,6 +499,7 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][3]?.piece.pieceType).toEqual('N');
 
         const move4: ChessMove = {
+
           gamePiece: { pieceColor: 'B', pieceType: 'N', moved: true },
           currentRank: 6,
           currentFile: 'f',
@@ -557,6 +560,7 @@ describe('ChessGame', () => {
         });
 
         const move3: ChessMove = {
+
           gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 3,
           currentFile: 'c',
@@ -604,6 +608,7 @@ describe('ChessGame', () => {
     describe('Given a Valid Bishop Move', () => {
       it('should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
+
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'b',
@@ -617,6 +622,7 @@ describe('ChessGame', () => {
         });
 
         const move2: ChessMove = {
+
           gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'a',
@@ -793,7 +799,6 @@ describe('ChessGame', () => {
           currentFile: 'h',
           destinationRank: 6,
           destinationFile: 'h',
-        };
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceType).toEqual('P');
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceColor).toEqual('B');
 
@@ -868,6 +873,7 @@ describe('ChessGame', () => {
 
         const move6: ChessMove = {
           gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
+
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 5,

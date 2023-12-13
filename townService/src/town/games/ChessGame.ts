@@ -20,6 +20,7 @@ import {
 } from '../../types/CoveyTownSocket.d';
 import { databaseUpdate } from './database/chessDatabase';
 import Game from './Game';
+import InvalidParametersError from '../../lib/InvalidParametersError';
 
 export const CHESS_BOARD_SIZE = 8;
 
@@ -556,7 +557,316 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param move The move to apply to the game
    * @throws InvalidParametersError if the move is invalid (with specific message noted above)
    */
-  public applyMove(_move: GameMove<ChessMove>): void {}
+  public applyMove(_move: GameMove<ChessMove>): void {
+    if (
+      (this.state.moves.length % 2 === 0 && _move.playerID !== this.state.white) ||
+      (this.state.moves.length % 2 === 1 && _move.playerID !== this.state.black)
+    ) {
+      throw new InvalidParametersError('Not Your Turn');
+    }
+    if (this._validateGamePieceMovement(_move)) {
+      // updates the moves with the current game move
+      const updateValidMovesToGameState = [...this.state.moves, _move.move];
+      this.state.moves = updateValidMovesToGameState;
+
+      // updates the state of the board with the new position and sets the old position to undefined1
+      this.state.board[_move.move.destinationRank - 1][
+        this._fileToIndex(_move.move.destinationFile)
+      ] = {
+        piece: {
+          pieceColor: _move.move.gamePiece.pieceColor,
+          pieceType: _move.move.gamePiece.pieceType,
+        },
+      };
+      this.state.board[_move.move.currentRank - 1][this._fileToIndex(_move.move.currentFile)] =
+        undefined;
+    } else {
+      throw new InvalidParametersError('Invalid Move');
+    }
+  }
+
+  // Checks if the desination and pieces on the way are empty
+  private _checkChessCells(
+    currRank: number,
+    currFile: number,
+    destRank: number,
+    destFile: number,
+    playerColor: string,
+  ): string {
+    while (currRank !== destRank || currFile !== destFile) {
+      if (currRank !== destRank) {
+        currRank = currRank < destRank ? currRank + 1 : currRank - 1;
+      }
+      if (currFile !== destFile) {
+        currFile = currFile < destFile ? currFile + 1 : currFile - 1;
+      }
+      if (currRank !== destRank && currFile !== destFile) {
+        if (this.state.board[currRank][currFile] !== undefined) {
+          return 'Pieces in the way of movement';
+        }
+      } else {
+        if (this.state.board[currRank][currFile] === undefined) {
+          return 'Empty';
+        }
+        if (this.state.board[currRank][currFile]?.piece.pieceColor === playerColor) {
+          return 'Your piece is in the way';
+        }
+        return 'Capture Possible';
+      }
+    }
+    return 'Error';
+  }
+
+  /**
+   * @param {ChessMove} move - determines whether the move is valid or not depending on its piece and movement factors for destination rank and file
+   * @returns {boolean} true if the move is valid, or false if not.
+   * to do: implement checks for king movement for castling and whether the king is in check or checkmate
+   */
+  private _validateGamePieceMovement(move: GameMove<ChessMove>): boolean {
+    // Explicit declarations of Values so no magic numbers are declared
+    const shiftNeededForBoardArray = 1;
+    const minimumValueForBoard = 0;
+    const maximumValueForBoard = 7;
+
+    const chessPiece = move.move.gamePiece.pieceType;
+    const currInRank = move.move.currentRank - shiftNeededForBoardArray;
+    const destToRank = move.move.destinationRank - shiftNeededForBoardArray;
+    const chessPieceColor = move.move.gamePiece.pieceColor;
+    const destFileNumber = this._fileToIndex(move.move.destinationFile);
+    const currFileNumber = this._fileToIndex(move.move.currentFile);
+    let result;
+    let diffRank: number;
+    let diffFile: number;
+    let playerColor;
+
+    if (move.playerID === this.state.white) {
+      playerColor = 'W';
+      if (chessPieceColor !== 'W') {
+        throw new InvalidParametersError('Player 1 can only move white pieces');
+      }
+    } else {
+      playerColor = 'B';
+      if (chessPieceColor !== 'B') {
+        throw new InvalidParametersError('Player 2 can only move black pieces');
+      }
+    }
+    if (
+      destFileNumber < minimumValueForBoard ||
+      destFileNumber > maximumValueForBoard ||
+      currFileNumber < minimumValueForBoard ||
+      currFileNumber > maximumValueForBoard ||
+      destToRank < minimumValueForBoard ||
+      destToRank > maximumValueForBoard ||
+      currInRank < minimumValueForBoard ||
+      currInRank > maximumValueForBoard
+    ) {
+      return false;
+    }
+    // expect the piece that you want to move to be on that spot
+    if (
+      this.state.board[currInRank][currFileNumber]?.piece.pieceType !==
+      move.move.gamePiece.pieceType
+    ) {
+      return false;
+    }
+    switch (chessPiece) {
+      case 'P':
+        // Checks to see if pawn's initial move is by 2
+        if (
+          (currInRank === 1 && destToRank === currInRank + 2 && playerColor === 'W') ||
+          (currInRank === 6 && destToRank === currInRank - 2 && playerColor === 'B')
+        ) {
+          // if file changes the move is invalid
+          if (destFileNumber !== currFileNumber) {
+            return false;
+          }
+          // checks if the cell is empty.
+
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+
+          // if result equals empty then the move is valid.
+          if (result === 'Empty') {
+            return true;
+          }
+
+          return false;
+        }
+        // regular pawn movement by 1
+        if (
+          (destToRank === currInRank + 1 && playerColor === 'W') ||
+          (destToRank === currInRank - 1 && playerColor === 'B')
+        ) {
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          // If the file changes, then expect a capture. If not, will return false.
+          if (destFileNumber === currFileNumber - 1 || destFileNumber === currFileNumber + 1) {
+            if (result === 'Empty') {
+              // if moves length is 0 then it is impossible for the pawn to change file
+              if (this.state.moves.length === 0) {
+                return false;
+              }
+              // call canEnPassant with the lastMove from the moves ReadOnlyArray and the current move
+              if (this.canEnPassant(this.state.moves[this.state.moves.length - 1], move.move)) {
+                // capture the pawn piece
+                this.state.board[destToRank - 1][destFileNumber] = undefined;
+                move.move.enPassant = true;
+                return true;
+              }
+              return false;
+            }
+            if (result === 'Capture Possible') {
+              return true;
+            }
+            return false;
+          }
+          if (result === 'Empty') {
+            return true;
+          }
+          return false;
+        }
+        break;
+      case 'N':
+        // Checks Knights movement whether the rank increases/decreases by 1 then the file should increment/decrement by 2 and vice versa
+        if (
+          ((destToRank === currInRank + 1 || destToRank === currInRank - 1) &&
+            (destFileNumber === currFileNumber + 2 || destFileNumber === currFileNumber - 2)) ||
+          ((destFileNumber === currFileNumber + 1 || destFileNumber === currFileNumber - 1) &&
+            (destToRank === currInRank + 2 || destToRank === currInRank - 2))
+        ) {
+          // if the piece on the board matches the player's color then it is an invalid move
+          if (this.state.board[destToRank][destFileNumber]?.piece.pieceColor === playerColor) {
+            return false;
+          }
+          return true;
+        }
+        break;
+      case 'B':
+        if (destFileNumber !== currFileNumber && destToRank !== currInRank) {
+          if (destFileNumber > currFileNumber) {
+            diffFile = destFileNumber - currFileNumber;
+          } else {
+            diffFile = currFileNumber - destFileNumber;
+          }
+          if (destToRank > currInRank) {
+            diffRank = destToRank - currInRank;
+          } else {
+            diffRank = currInRank - destToRank;
+          }
+          // the differences should be equal because of how diagonal movement works.
+          if (diffRank !== diffFile) {
+            return false;
+          }
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          if (result === 'Empty' || result === 'Capture Possible') {
+            return true;
+          }
+          return false;
+        }
+        break;
+      case 'K':
+        // Checks vertical, horizontal, and diagonal movement
+        if (
+          (destFileNumber === currFileNumber &&
+            (destToRank === currInRank + 1 || destToRank === currInRank - 1)) ||
+          (destToRank === currInRank &&
+            (destFileNumber === currFileNumber + 1 || destFileNumber === currFileNumber - 1)) ||
+          ((destFileNumber === currFileNumber + 1 || destFileNumber === currFileNumber - 1) &&
+            (destToRank === currInRank + 1 || destToRank === currInRank - 1))
+        ) {
+          const val2 = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          if (val2 === 'Empty' || val2 === 'Piece on the board') {
+            return true;
+          }
+        }
+        return false;
+      case 'Q':
+        if (destFileNumber > currFileNumber) {
+          diffFile = destFileNumber - currFileNumber;
+        } else {
+          diffFile = currFileNumber - destFileNumber;
+        }
+        if (destToRank > currInRank) {
+          diffRank = destToRank - currInRank;
+        } else {
+          diffRank = currInRank - destToRank;
+        }
+        if (
+          (destToRank === currInRank && destFileNumber !== currFileNumber) ||
+          (destFileNumber === currFileNumber && destToRank !== currFileNumber)
+        ) {
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          if (result === 'Empty' || result === 'Capture Possible') {
+            return true;
+          }
+        }
+        if (destFileNumber !== currFileNumber && destToRank !== currInRank) {
+          if (diffFile !== diffRank) {
+            return false;
+          }
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          if (result === 'Empty' || result === 'Capture Possible') {
+            return true;
+          }
+        }
+        break;
+      case 'R':
+        if (
+          (destToRank === currInRank && destFileNumber !== currFileNumber) ||
+          (destFileNumber === currFileNumber && destToRank !== currInRank)
+        ) {
+          result = this._checkChessCells(
+            currInRank,
+            currFileNumber,
+            destToRank,
+            destFileNumber,
+            playerColor,
+          );
+          if (result === 'Empty' || result === 'Capture Possible') {
+            return true;
+          }
+          return false;
+        }
+        break;
+      default:
+        return false;
+    }
+    return false;
+  }
 
   /**
    * Adds a player to the game.
@@ -567,7 +877,22 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @throws InvalidParametersError if the player is already in the game (PLAYER_ALREADY_IN_GAME_MESSAGE)
    *  or the game is full (GAME_FULL_MESSAGE)
    */
-  public _join(_player: Player): void {}
+  public _join(player: Player): void {
+    if (this._players.length === 0) {
+      this.state.white = player.id;
+      this.state.status = 'WAITING_TO_START';
+    }
+    if (this._players.length === 1) {
+      this.state.black = player.id;
+      this.state.status = 'IN_PROGRESS';
+    }
+    if (this._players.length >= 2) {
+      if (this.state.white === player.id || this.state.black === player.id) {
+        throw new InvalidParametersError('PLAYER_ALREADY_IN_GAME_MESSAGE');
+      }
+      throw new InvalidParametersError('GAME_FULL_MESSAGE');
+    }
+  }
 
   /**
    * Removes a player from the game.
@@ -759,27 +1084,31 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    */
 
   public isCheckmate(): boolean {
-    // Determine the current player's color based on the number of moves
+    // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
-    // Find the king's position for the current player
-    const kingPosition = this._getKingPosition(currentPlayerColor);
-    // If the king is not in check, then it's not checkmate
-    // TODO: Uncomment when isKingInCheck is implemented
-    // if (!this._isKingInCheck(kingPosition, gameState, currentPlayerColor)) {
-    //   return false;
-    // }
+    // Check if the king is currently in check
+    if (!this.isKingInCheck(currentPlayerColor)) {
+      return false;
+    }
     // Get all possible moves for the current player
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
-    // Check if any move can take the king out of check
-    return !allPossibleMoves.some(move => {
-      // Apply each move to a hypothetical game state
-      const hypotheticalGameState = this._applyMoveToTemporaryBoard(move);
-      // Check if the king would still be in check after the move
-      // TODO: Uncomment when isKingInCheck is implemented, then remove the return false
-      // return !this._isKingInCheck(this._getKingPosition(currentPlayerColor, hypotheticalGameState), hypotheticalGameState, currentPlayerColor);
-      // Default return for now
-      return false;
-    });
+    // Test each move to see if it can take the king out of check
+    for (const move of allPossibleMoves) {
+      // Backup the current state
+      const originalState = { ...this.state };
+      // Apply the move temporarily
+      this.updateChessBoard(move);
+      // Check if the king is still in check after the move
+      const stillInCheck = this.isKingInCheck(currentPlayerColor);
+      // Restore the original state
+      this.state = originalState;
+      // If the king is not in check after this move, it's not checkmate
+      if (!stillInCheck) {
+        return false;
+      }
+    }
+    // If no move gets the king out of check, it's checkmate
+    return true;
   }
 
   protected _applyMoveToTemporaryBoard(move: ChessMove): ChessGameState {
@@ -1147,13 +1476,29 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * En passant is a special pawn capture that can only occur immediately after a pawn moves two squares forward from its starting position.
    *
    * @param {ChessMove} lastMove - The last move made in the game, to check if it was a two-square pawn advance.
+   * @param {ChessMove} currentMove - The current move being made, check if the previous move is in the same rank and the difference in file is by 1
    * @returns {boolean} - True if en passant capture is possible, otherwise false.
-   * @throws {Error} - Throws an error if the game state or last move is not valid.
    */
 
-  public canEnPassant(lastMove: ChessMove): boolean {
-    const lastMoved = lastMove;
-    return false; // Default return value
+  public canEnPassant(lastMove: ChessMove, currentMove: ChessMove): boolean {
+    const currentMovesFileNumber = this._fileToIndex(currentMove.currentFile);
+    const lastMovesFileNumber = this._fileToIndex(lastMove.destinationFile);
+
+    // Checks the previous moves and determines whether it was a pawn with an initial movement of 2
+    if (
+      lastMove.gamePiece.pieceType === 'P' &&
+      ((lastMove.gamePiece.pieceColor === 'B' &&
+        lastMove.currentRank - 1 === 6 &&
+        lastMove.destinationRank - 1 === 4) ||
+        (lastMove.gamePiece.pieceColor === 'W' &&
+          lastMove.currentRank - 1 === 1 &&
+          lastMove.destinationRank - 1 === 3)) &&
+      (lastMovesFileNumber === currentMovesFileNumber + 1 ||
+        lastMovesFileNumber === currentMovesFileNumber - 1)
+    ) {
+      return true;
+    }
+    return false;
   }
 
   /**
