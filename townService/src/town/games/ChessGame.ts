@@ -696,16 +696,20 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     throw new Error('King not found');
   }
 
-  // TODO: change _color to color, and uncomment code when possibleMoves is done.
-  protected _getAllPossibleMoves(_color: 'W' | 'B'): ChessMove[] {
-    // const pieces = this._getPieces(color);
-    // let moves: ChessMove[] = [];
-    // pieces.forEach(piece => {
-    //   moves = moves.concat(this._possibleMoves(piece.position.rank, piece.position.file));
-    // });
-
-    // return moves;
-    return [];
+  protected _getAllPossibleMoves(color: 'W' | 'B'): ChessMove[] {
+    const allMoves: ChessMove[] = [];
+    for (let rank = 1; rank <= CHESS_BOARD_SIZE; rank++) {
+      for (let file = 0; file < CHESS_BOARD_SIZE; file++) {
+        const chessFile = this._indexToFile(file) as ChessFilePosition;
+        const chessRank = rank as ChessRankPosition;
+        const cell = this.state.board[this._rankToRow(chessRank)][file];
+        if (cell && cell.piece.pieceColor === color) {
+          const moves = this.possibleMoves(chessRank, chessFile);
+          allMoves.push(...moves);
+        }
+      }
+    }
+    return allMoves;
   }
 
   protected _getPieces(color: 'W' | 'B'): PieceWithPosition[] {
