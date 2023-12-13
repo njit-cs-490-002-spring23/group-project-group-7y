@@ -17,7 +17,7 @@ const StyledChessRow = chakra(Box, {
 /**
  * A component that will render a single cell in the Chess board, styled
  */
-const StyledChessSquare = chakra(Button, {
+const StyledChessSquare = chakra(Box, {
   baseStyle: {
     justifyContent: 'center',
     alignItems: 'center',
