@@ -75,7 +75,8 @@ export default class ChessGameArea extends GameArea<ChessGame> {
   private _updateHistoryIfGameOver() {
     if (this.game && this.game.state.status === 'OVER') {
       const gamePlayer = this._occupants.filter(
-        eachPlayer => eachPlayer.id === this.game?.state.white || eachPlayer.id === this.game?.state.black,
+        eachPlayer =>
+          eachPlayer.id === this.game?.state.white || eachPlayer.id === this.game?.state.black,
       );
       const gameResult: GameResult = {
         gameID: this.game.id,
