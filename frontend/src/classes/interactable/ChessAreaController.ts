@@ -32,21 +32,70 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * and board[2][2] is the bottom-right cell
    */
   get board(): ChessCell[][] {
-    const board: ChessCell[][] = [];
+    const board: ChessCell[][] = Array(8)
+      .fill(undefined)
+      .map(() => Array(8).fill(undefined));
+    const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
+    const rankToIndex = (rank: ChessRankPosition): number => 8 - rank;
+    // Initialize board with pieces in initial positions
+    const initialPositions: { [key: string]: ChessPiece } = {
+      a1: { pieceType: 'R', pieceColor: 'W', moved: false },
+      b1: { pieceType: 'N', pieceColor: 'W', moved: false },
+      c1: { pieceType: 'B', pieceColor: 'W', moved: false },
+      d1: { pieceType: 'Q', pieceColor: 'W', moved: false },
+      e1: { pieceType: 'K', pieceColor: 'W', moved: false },
+      f1: { pieceType: 'B', pieceColor: 'W', moved: false },
+      g1: { pieceType: 'N', pieceColor: 'W', moved: false },
+      h1: { pieceType: 'R', pieceColor: 'W', moved: false },
+      a2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      b2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      c2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      d2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      e2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      f2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      g2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      h2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      a7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      b7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      c7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      d7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      e7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      f7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      g7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      h7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      a8: { pieceType: 'R', pieceColor: 'B', moved: false },
+      b8: { pieceType: 'N', pieceColor: 'B', moved: false },
+      c8: { pieceType: 'B', pieceColor: 'B', moved: false },
+      d8: { pieceType: 'Q', pieceColor: 'B', moved: false },
+      e8: { pieceType: 'K', pieceColor: 'B', moved: false },
+      f8: { pieceType: 'B', pieceColor: 'B', moved: false },
+      g8: { pieceType: 'N', pieceColor: 'B', moved: false },
+      h8: { pieceType: 'R', pieceColor: 'B', moved: false },
+    };
+    Object.entries(initialPositions).forEach(([key, piece]) => {
+      const file = key[0] as ChessFilePosition;
+      const rank = parseInt(key[1], 10) as ChessRankPosition;
+      if (piece) {
+        const cell: ChessCell = {
+          piece,
+        };
+        board[rankToIndex(rank)][fileToIndex(file)] = cell;
+      }
+    });
     return board;
   }
 
   /**
    * Returns the player with the 'X' game piece, if there is one, or undefined otherwise
    */
-  get x(): PlayerController | undefined {
+  get white(): PlayerController | undefined {
     return this._players.find(eachPlayer => eachPlayer.id === this._model.game?.state.white);
   }
 
   /**
    * Returns the player with the 'O' game piece, if there is one, or undefined otherwise
    */
-  get o(): PlayerController | undefined {
+  get black(): PlayerController | undefined {
     return this._players.find(eachPlayer => eachPlayer.id === this._model.game?.state.black);
   }
 
@@ -71,7 +120,7 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    */
   get whoseTurn(): PlayerController | undefined {
     if (this._model.game && this._model.game.state.status === 'IN_PROGRESS') {
-      return this.moveCount % 2 === 0 ? this.x : this.o;
+      return this.moveCount % 2 === 0 ? this.white : this.black;
     }
     return undefined;
   }
@@ -90,7 +139,9 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * Returns true if the current player is a player in this game
    */
   get isPlayer(): boolean {
-    return this._townController.ourPlayer === this.x || this._townController.ourPlayer === this.o;
+    return (
+      this._townController.ourPlayer === this.white || this._townController.ourPlayer === this.black
+    );
   }
 
   /**
@@ -98,9 +149,9 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    *
    * Throws an error PLAYER_NOT_IN_GAME_ERROR if the current player is not a player in this game
    */
-  get gamePiece(): 'X' | 'O' {
+  get gamePiece(): 'W' | 'B' {
     if (!this.isPlayer) throw new Error(PLAYER_NOT_IN_GAME_ERROR);
-    return this._townController.ourPlayer.id === this.x?.id ? 'X' : 'O';
+    return this._townController.ourPlayer.id === this.white?.id ? 'W' : 'B';
   }
 
   /**

@@ -12,72 +12,104 @@ import {
   Tbody,
   Td,
   Tr,
+  useToast,
+  Container,
+  chakra,
 } from '@chakra-ui/react';
 import Leaderboard, { LeaderBoardProp } from './Leaderboard';
+import Multiplayer from './Multiplayer';
 import GameReview from './GameReview';
 import GameReviewDetail from './GameReviewDetal';
 import useTownController from '../../../../hooks/useTownController';
 import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
-import { useInteractable } from '../../../../classes/TownController';
+import { useInteractable, useInteractableAreaController } from '../../../../classes/TownController';
 import GameAreaInteractable from '../GameArea';
-type GameHistories = {
-  [key: string]: {
-    date: string;
-    opponent: string;
-    result: string;
-    moves: string[];
-  };
+import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
+
+export type ChessGameProp = {
+  gameAreaController: ChessAreaController;
+  mainMenuPage: () => void;
 };
 
-const fakeGameHistories: GameHistories = {
-  game1: {
-    date: '2023-04-01',
-    opponent: 'Person',
-    result: 'Win',
-    moves: ['e4 e5', 'Nf3 Nc6', 'Bb5 a6'],
+/**
+ * A component that will render a single cell in the Chess board, styled
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const HomeScreenButton = chakra(Button, {
+  baseStyle: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexBasis: '33%',
+    height: '30px',
+    color: 'green',
+    width: '175px',
+    fontSize: '20px',
+    margin: '5px',
   },
-  game2: {
-    date: '2023-04-02',
-    opponent: 'Person1',
-    result: 'Loss',
-    moves: ['d4 d5', 'c4 c6', 'Nc3 dxc4'],
-  },
-  game3: {
-    date: '2023-04-03',
-    opponent: 'Person2',
-    result: 'Tie',
-    moves: ['e4 c5', 'Nf3 e6', 'd4 cxd4'],
-  },
-};
+});
 
-type GameDetail = {
-  date: string;
-  opponent: string;
-  result: string;
-  moves: string[];
-};
+/**
+ * Creates and returns the Multiplayer button
+ * If the game is in status WAITING_TO_START or OVER, a button to join the game is displayed, with the text 'Join New Game'
+ *    - Clicking the button calls the joinGame method on the gameAreaController
+ *    - Before calling joinGame method, the button is disabled and has the property isLoading set to true, and is re-enabled when the method call completes
+ *    - If the method call fails, a toast is displayed with the error message as the description of the toast (and status 'error')
+ *    - Once the player joins the game, the button dissapears
+ *  @param gameAreaController the controller for the TicTacToe game
+ * @returns the JSX.Element with possibly a button
+ */
+function JoinButton(props: {
+  gameAreaController: ChessAreaController;
+  multiplayerPage: () => void;
+  mainMenuPage: () => void;
+}): JSX.Element {
+  const gameAreaController = props.gameAreaController;
+  const mainMenu = () => props.mainMenuPage();
+  const multiplayer = () => props.multiplayerPage();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [buttonText, setButtonText] = useState('Join Multiplayer');
+  let button: JSX.Element;
+  const displayToast = useToast();
+  if (!gameAreaController.isPlayer && gameAreaController.status !== 'IN_PROGRESS') {
+    button = (
+      <HomeScreenButton
+        bg='green'
+        color='white'
+        variant='outline'
+        isLoading={isLoading}
+        disabled={isDisabled}
+        onClick={async (event: { currentTarget: { remove: () => void } }) => {
+          setIsDisabled(true);
+          setIsLoading(true);
+          setButtonText('Loading');
+          /* console.log(gameAreaController);
+          await gameAreaController
+            .joinGame()
+            .then(() => multiplayer())
+            .catch(e => {
+              console.log(e);
+              displayToast({
+                title: 'Join Failed',
+                description: `Error: ${(e as Error).message}`,
+                status: 'error',
+              });
+            });
+          console.log(gameAreaController); */
+          multiplayer();
+          setIsDisabled(false);
+          setIsLoading(false);
+          setButtonText('Join Multiplayer');
+        }}>
+        {buttonText}
+      </HomeScreenButton>
+    );
+  } else button = <> </>;
+  return button;
+}
 
-const FAKE_GAMES = [
-  {
-    date: '2023-04-01',
-    opponent: 'PlayerOne',
-    result: 'Win',
-    id: 'game1',
-  },
-  {
-    date: '2023-04-02',
-    opponent: 'PlayerTwo',
-    result: 'Loss',
-    id: 'game2',
-  },
-  {
-    date: '2023-04-03',
-    opponent: 'PlayerThree',
-    result: 'Tie',
-    id: 'game3',
-  },
-];
+
 
 function ChessArea(): JSX.Element {
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
@@ -85,6 +117,15 @@ function ChessArea(): JSX.Element {
   const townController = useTownController();
   const [selectedGame, setSelectedGame] = useState<GameDetail | null>(null);
 
+  const mainMenuPage = () => {
+    setcurrentPage('mainMenu');
+  };
+  const leaderboardPage = () => {
+    setcurrentPage('leaderboard');
+  };
+  const multiplayerPage = () => {
+    setcurrentPage('multiplayer');
+  };
   useEffect(() => {
     // Fetch chess game results (for now, using dummy data)
     const results = generateDummyChessResults();
@@ -94,71 +135,49 @@ function ChessArea(): JSX.Element {
     setCurrentPage(page);
   };
 
-  const handleSelectGame = (gameId: string) => {
-    const selectedHistory = fakeGameHistories[gameId];
-    setSelectedGame(selectedHistory);
-    navigateTo('gameReviewDetail');
-  };
-  let content;
-  switch (currentPage) {
-    case 'mainMenu':
-      return (
-        <Box
-          width='100%'
-          maxWidth='100%'
-          overflowX='auto'
-          background={`url('/assets/397848.jpg') no-repeat center/cover`}
-          p={4}
-          color='black'
-          minHeight='400px'>
-          <Box as='header' textAlign='center' mb={4} bg='orange'>
-            <h2>Main Menu</h2>
-          </Box>
 
-          <Button
-            style={{ marginLeft: '50%', marginTop: '10%' }}
-            bg='green'
-            color='white'
-            onClick={() => navigateTo('leaderboard')}
-            variant='outline'>
-            LeaderBoard
-          </Button>
-
-          <Button
-            style={{ marginLeft: '50%', marginTop: '10%' }}
-            bg='green'
-            color='white'
-            onClick={() => navigateTo('gamereview')}
-            variant='outline'>
-            Game Review
-          </Button>
+  //diaplay proper page
+  if (currentPage === 'leaderboard') {
+    return (
+      <>
+        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else if (currentPage === 'multiplayer') {
+    return (
+      <>
+        <Multiplayer gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else {
+    return (
+      <Box
+        width='100%'
+        maxWidth='100%'
+        overflowX='auto'
+        background={`url('/assets/397848.jpg') no-repeat center/cover`}
+        p={4}
+        color='black'
+        minHeight='400px'>
+        <Box as='header' textAlign='center' mb={4} bg='orange'>
+          <h2>Main Menu</h2>
         </Box>
-      );
-    case 'leaderboard':
-      content = <Leaderboard results={chessResults} mainMenu={() => navigateTo('mainMenu')} />;
-      break;
-    case 'gamereview':
-      content = (
-        <GameReview
-          games={FAKE_GAMES}
-          selectGame={handleSelectGame}
-          mainMenu={() => navigateTo('mainMenu')}
-        />
-      );
-      break;
-    case 'gameReviewDetail':
-      content = selectedGame ? (
-        <GameReviewDetail
-          game={selectedGame}
-          nextMove={() => {}}
-          prevMove={() => {}}
-          mainMenu={() => navigateTo('mainMenu')}
-          backToReviewList={() => navigateTo('gamereview')}
-        />
-      ) : (
-        <p>No game selected</p>
-      );
-      break;
+        <Container width='50%' style={{ marginLeft: '45%', marginTop: '25%' }}>
+          <JoinButton
+            multiplayerPage={multiplayerPage}
+            mainMenuPage={mainMenuPage}
+            gameAreaController={gameAreaController}
+          />
+          <HomeScreenButton
+            bg='green'
+            color='white'
+            onClick={() => leaderboardPage()}
+            variant='outline'>
+            Leaderbaord
+          </HomeScreenButton>
+        </Container>
+      </Box>
+    );
   }
   return <>{content}</>;
 }
@@ -175,10 +194,8 @@ export default function ChessAreaWrapper(): JSX.Element {
   const closeModal = useCallback(() => {
     if (gameArea) {
       townController.interactEnd(gameArea);
-      //TODO: uncomment and attach controller later
-      /*const controller = townController.getGameAreaController(gameArea);
+      const controller = townController.getGameAreaController(gameArea);
       controller.leaveGame();
-      */
     }
   }, [townController, gameArea]);
 

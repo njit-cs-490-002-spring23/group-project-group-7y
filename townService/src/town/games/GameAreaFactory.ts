@@ -19,8 +19,8 @@ export default function GameAreaFactory(
     throw new Error(`Malformed viewing area ${name}`);
   }
   const rect: BoundingBox = { x: mapObject.x, y: mapObject.y, width, height };
-  const gameType = mapObject.properties?.find(prop => prop.name === 'type')?.value;
-  if (gameType === 'Chess') {
+  const gameType = mapObject.type;
+  if (gameType === 'GameArea') {
     return new ChessGameArea(name, rect, broadcastEmitter);
   }
   throw new Error(`Unknown game area type ${mapObject.class}`);

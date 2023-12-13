@@ -164,7 +164,6 @@ export interface ChessMove {
   currentFile: ChessFilePosition;
   destinationRank: ChessRankPosition;
   destinationFile: ChessFilePosition;
-  enPassant?: boolean;
 }
 
 export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
@@ -175,6 +174,7 @@ export const API_CONNECTION_ERROR = 'Cannot connect to StockfishOnline API';
 export type ChessPiece = {
   pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
   pieceColor: 'W' | 'B';
+  moved : boolean;
 }; // Kings, Queens, Rooks, Bishops, Knights, Pawns
 
 export type ChessCell = { piece: ChessPiece } | undefined;

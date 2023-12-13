@@ -4,26 +4,26 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { fetchMiddlewares } from 'tsoa';
 import axios from 'axios';
-import Player from '../../lib/Player';
 import {
-  GameMove,
   ChessGameState,
   ChessMove,
   ChessFilePosition,
   ChessRankPosition,
-  PieceWithPosition,
-  ChessPosition,
+  PlayerID,
   ChessCell,
   ChessPiece,
-  PlayerID,
-  API_CONNECTION_ERROR,
-} from '../../types/CoveyTownSocket.d';
+  GameMove,
+  ChessPosition,
+  PieceWithPosition,
+} from '../../types/CoveyTownSocket';
+import Player from '../../lib/Player';
+
 import { databaseUpdate } from './database/chessDatabase';
 import Game from './Game';
 import InvalidParametersError from '../../lib/InvalidParametersError';
 
 export const CHESS_BOARD_SIZE = 8;
-
+export const API_CONNECTION_ERROR = 'Cannot connect to StockfishOnline API';
 /**
  * A ChessGame is a Game that implements the rules of Chess.
  * @see https://en.wikipedia.org/wiki/Chess
@@ -114,10 +114,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
             emptySquareCount = 0;
           }
           if (currentCell.piece.pieceColor === 'W') {
-            const fenPiece = currentCell.piece.pieceType?.toLowerCase();
+            const fenPiece = currentCell.piece.pieceType;
             fen += fenPiece;
           } else {
-            const fenPiece = currentCell.piece.pieceType;
+            const fenPiece = currentCell.piece.pieceType?.toLowerCase();
             fen += fenPiece;
           }
         }
@@ -156,16 +156,27 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
 
     fen += ' ';
     const lastMove = this.state.moves.at(-1);
-    if (lastMove && lastMove.enPassant) {
+    if (lastMove && this._fenEnPassant(lastMove)) {
       if (lastMove.gamePiece.pieceColor === 'W') {
-        fen += `${lastMove.gamePiece.pieceType}3 `;
-      } else fen += `${lastMove.gamePiece.pieceType}6 `;
+        fen += `${lastMove.destinationFile}3 `;
+      } else fen += `${lastMove.destinationFile}6 `;
     } else fen += '- ';
 
     fen += `${this.state.halfMoves} `;
 
     fen += `${Math.floor(this.state.moves.length / 2) + 1}`;
     return fen;
+  }
+
+  /**
+   * Returns wheter the given move was a pawn move of 2
+   * @returns {true | false}
+   */
+  private _fenEnPassant(move: ChessMove): boolean {
+    if (Math.abs(move.currentRank - move.destinationRank) === 2) {
+      return true;
+    }
+    return false;
   }
 
   /*
@@ -205,13 +216,326 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
-   * Returns all possible moves for the piece at the given rank and file
-   * @param _rank The rank position
-   * @param _file The file position
+   * Starts form the starting indexes and applies the given displacement continously, adding each blank square as possible move,
+   * until a game piece is hit. This hitting set of indices is also added as a possible move if it's a opposing
    */
-  public possibleMoves(_rank: ChessRankPosition, _file: ChessFilePosition): ChessMove[] {
-    // eslint-disable-next-line prettier/prettier
-    throw new Error('Remove Before Implementing');
+  public processAndAddMoves(
+    currentRank: ChessRankPosition,
+    currentFile: ChessFilePosition,
+    gamePiece: ChessPiece,
+    possibleMoves: ChessMove[],
+    rowDisplacement: number,
+    colDisplacement: number,
+    processOnce?: boolean,
+  ): void {
+    const { board } = this.state;
+    const rowIndex = this._rankToRow(currentRank);
+    const colIndex = this._fileToColumn(currentFile);
+    let moveRowIndex = rowIndex + rowDisplacement;
+    let moveColIndex = colIndex + colDisplacement;
+    while (this._validIndex(moveRowIndex, moveColIndex)) {
+      if (board[moveRowIndex][moveColIndex] === undefined) {
+        const possibleMove: ChessMove = {
+          gamePiece,
+          currentRank,
+          currentFile,
+          destinationFile: this._columnToFile(moveColIndex),
+          destinationRank: this._rowToRank(moveRowIndex),
+        };
+        possibleMoves.push(possibleMove);
+      } else if (board[moveRowIndex][moveColIndex]?.piece.pieceColor !== gamePiece.pieceColor) {
+        const possibleMove: ChessMove = {
+          gamePiece,
+          currentRank,
+          currentFile,
+          destinationFile: this._columnToFile(moveColIndex),
+          destinationRank: this._rowToRank(moveRowIndex),
+        };
+        possibleMoves.push(possibleMove);
+      } else if (board[moveRowIndex][moveColIndex]?.piece.pieceColor === gamePiece.pieceColor) {
+        break;
+      }
+      if (processOnce && processOnce === true) {
+        break;
+      }
+      moveRowIndex += rowDisplacement;
+      moveColIndex += rowDisplacement;
+    }
+  }
+
+  /**
+   * Simple method to return the oppsing player's pieces' color
+   *
+   * @param color
+   */
+  private _opponentColor(color: 'W' | 'B') {
+    return color === 'W' ? 'B' : 'W';
+  }
+
+  /**
+   * Returns all possible moves for the piece at the given rank and file
+   * @param rank The rank position
+   * @param file The file position
+   * export type ChessPiece = {
+  pieceType: 'K' | 'Q' | 'R' | 'B' | 'N' | 'P' | undefined;
+  pieceColor: 'W' | 'B';
+}; // Kings, Queens, Rooks, Bishops, Knights, Pawns
+
+   */
+  public possibleMoves(
+    rank: ChessRankPosition,
+    file: ChessFilePosition,
+    tempBoard?: Readonly<ChessCell[][]>,
+  ): ChessMove[] {
+    let board: Readonly<ChessCell[][]>;
+    if (tempBoard) {
+      board = tempBoard;
+    } else {
+      board = this.state.board;
+    }
+    const possibleMoves: ChessMove[] = [];
+    const rowIndex = this._rankToRow(rank);
+    const colIndex = this._fileToColumn(file);
+    const chessSquare = board[rowIndex][colIndex];
+
+    switch (chessSquare?.piece.pieceType) {
+      case 'K': {
+        const kingMoves = [
+          { row: -1, col: 0 },
+          { row: 1, col: 0 },
+          { row: 0, col: 1 },
+          { row: 0, col: -1 },
+          { row: -1, col: 1 },
+          { row: -1, col: -1 },
+          { row: 1, col: 1 },
+          { row: 1, col: -1 },
+        ];
+        for (let i = 0; i < kingMoves.length; i++) {
+          const path = kingMoves[i];
+          this.processAndAddMoves(
+            rank,
+            file,
+            chessSquare.piece,
+            possibleMoves,
+            path.row,
+            path.col,
+            true,
+          );
+        }
+
+        // check castle moves
+        if (this.canCastle(chessSquare.piece.pieceColor, 'K')) {
+          if (
+            board[rowIndex][colIndex + 1] === undefined &&
+            board[rowIndex][colIndex + 2] === undefined &&
+            !this.underAttack(
+              rowIndex,
+              colIndex + 1,
+              this._opponentColor(chessSquare.piece.pieceColor),
+            ) &&
+            !this.underAttack(
+              rowIndex,
+              colIndex + 2,
+              this._opponentColor(chessSquare.piece.pieceColor),
+            )
+          ) {
+            const possibleMove: ChessMove = {
+              gamePiece: chessSquare.piece,
+              currentRank: rank,
+              currentFile: file,
+              destinationFile: this._columnToFile(colIndex + 2),
+              destinationRank: this._rowToRank(rowIndex),
+            };
+            possibleMoves.push(possibleMove);
+          }
+        }
+        if (this.canCastle(chessSquare.piece.pieceColor, 'Q')) {
+          if (
+            board[rowIndex][colIndex - 1] === undefined &&
+            board[rowIndex][colIndex - 2] === undefined &&
+            board[rowIndex][colIndex - 3] === undefined &&
+            !this.underAttack(
+              rowIndex,
+              colIndex - 1,
+              this._opponentColor(chessSquare.piece.pieceColor),
+            ) &&
+            !this.underAttack(
+              rowIndex,
+              colIndex + 2,
+              this._opponentColor(chessSquare.piece.pieceColor),
+            )
+          ) {
+            const possibleMove: ChessMove = {
+              gamePiece: chessSquare.piece,
+              currentRank: rank,
+              currentFile: file,
+              destinationFile: this._columnToFile(colIndex - 2),
+              destinationRank: this._rowToRank(rowIndex),
+            };
+            possibleMoves.push(possibleMove);
+          }
+        }
+
+        break;
+      }
+      case 'Q': {
+        const queenInitialMoves = [
+          { row: -1, col: 0 },
+          { row: 1, col: 0 },
+          { row: 0, col: 1 },
+          { row: 0, col: -1 },
+          { row: -1, col: 1 },
+          { row: -1, col: -1 },
+          { row: 1, col: 1 },
+          { row: 1, col: -1 },
+        ];
+        for (let i = 0; i < queenInitialMoves.length; i++) {
+          const path = queenInitialMoves[i];
+          this.processAndAddMoves(rank, file, chessSquare.piece, possibleMoves, path.row, path.col);
+        }
+        break;
+      }
+      case 'R': {
+        const rookInitialMoves = [
+          { row: -1, col: 0 },
+          { row: 1, col: 0 },
+          { row: 0, col: 1 },
+          { row: 0, col: -1 },
+        ];
+        for (let i = 0; i < rookInitialMoves.length; i++) {
+          const path = rookInitialMoves[i];
+          this.processAndAddMoves(rank, file, chessSquare.piece, possibleMoves, path.row, path.col);
+        }
+        break;
+      }
+      case 'B': {
+        const rookInitialMoves = [
+          { row: -1, col: 1 },
+          { row: -1, col: -1 },
+          { row: 1, col: 1 },
+          { row: 1, col: -1 },
+        ];
+        for (let i = 0; i < rookInitialMoves.length; i++) {
+          const path = rookInitialMoves[i];
+          this.processAndAddMoves(rank, file, chessSquare.piece, possibleMoves, path.row, path.col);
+        }
+        break;
+      }
+      case 'N': {
+        const knightMoves = [
+          { row: -2, col: -1 },
+          { row: -2, col: 1 },
+          { row: -1, col: -2 },
+          { row: -1, col: 2 },
+          { row: 2, col: -1 },
+          { row: 2, col: 1 },
+          { row: 1, col: -2 },
+          { row: 1, col: -2 },
+        ];
+        for (let i = 0; i < knightMoves.length; i++) {
+          const path = knightMoves[i];
+          this.processAndAddMoves(
+            rank,
+            file,
+            chessSquare.piece,
+            possibleMoves,
+            path.row,
+            path.col,
+            true,
+          );
+        }
+        break;
+      }
+      case 'P': {
+        const pawnMoves = [
+          { row: -1, col: -1, type: 'C', color: 'W' },
+          { row: -1, col: 1, type: 'C', color: 'W' },
+          { row: -1, col: 0, type: 'N', color: 'W' },
+          { row: -2, col: 0, type: 'F', color: 'W' },
+          { row: 1, col: -1, type: 'C', color: 'B' },
+          { row: 1, col: 1, type: 'C', color: 'B' },
+          { row: 1, col: 0, type: 'N', color: 'B' },
+          { row: 2, col: 0, type: 'F', color: 'B' },
+        ];
+        for (let i = 0; i < pawnMoves.length; i++) {
+          const path = pawnMoves[i];
+          if (path.color === chessSquare.piece.pieceColor) {
+            const pawanMoveRowIndex = rowIndex + path.row;
+            const pawnMoveColIndex = colIndex + path.col;
+            /* const p: ChessMove = {
+              gamePiece: chessSquare.piece,
+              currentRank: rank,
+              currentFile: file,
+              destinationFile: this._columnToFile(pawnMoveColIndex),
+              destinationRank: this._rowToRank(pawanMoveRowIndex),
+            };
+            possibleMoves.push(p); */
+            if (this._validIndex(pawanMoveRowIndex, pawnMoveColIndex)) {
+              if (path.type === 'F' && chessSquare.piece.moved === false) {
+                const possibleMove: ChessMove = {
+                  gamePiece: chessSquare.piece,
+                  currentRank: rank,
+                  currentFile: file,
+                  destinationFile: this._columnToFile(pawnMoveColIndex),
+                  destinationRank: this._rowToRank(pawanMoveRowIndex),
+                };
+                possibleMoves.push(possibleMove);
+              } else if (
+                path.type === 'N' &&
+                board[pawanMoveRowIndex][pawnMoveColIndex] === undefined
+              ) {
+                const possibleMove: ChessMove = {
+                  gamePiece: chessSquare.piece,
+                  currentRank: rank,
+                  currentFile: file,
+                  destinationFile: this._columnToFile(pawnMoveColIndex),
+                  destinationRank: this._rowToRank(pawanMoveRowIndex),
+                };
+                possibleMoves.push(possibleMove);
+              } else if (path.type === 'C') {
+                if (
+                  board[pawanMoveRowIndex][pawnMoveColIndex] !== undefined &&
+                  board[pawanMoveRowIndex][pawnMoveColIndex]?.piece.pieceColor !==
+                    chessSquare.piece.pieceColor
+                ) {
+                  const possibleMove: ChessMove = {
+                    gamePiece: chessSquare.piece,
+                    currentRank: rank,
+                    currentFile: file,
+                    destinationFile: this._columnToFile(pawnMoveColIndex),
+                    destinationRank: this._rowToRank(pawanMoveRowIndex),
+                  };
+                  possibleMoves.push(possibleMove);
+                } else if (
+                  this.state.moves[this.state.moves.length - 1] &&
+                  this._fenEnPassant(this.state.moves[this.state.moves.length - 1]) &&
+                  this._fileToColumn(
+                    this.state.moves[this.state.moves.length - 1].destinationFile,
+                  ) === pawnMoveColIndex &&
+                  this._rankToRow(this.state.moves[this.state.moves.length - 1].destinationRank) +
+                    1 ===
+                    pawanMoveRowIndex
+                ) {
+                  const possibleMove: ChessMove = {
+                    gamePiece: chessSquare.piece,
+                    currentRank: rank,
+                    currentFile: file,
+                    destinationFile: this._columnToFile(pawnMoveColIndex),
+                    destinationRank: this._rowToRank(pawanMoveRowIndex),
+                  };
+                  possibleMoves.push(possibleMove);
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+      default: {
+        return [];
+      }
+    }
+    return possibleMoves;
   }
 
   /*
@@ -252,6 +576,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         piece: {
           pieceColor: _move.move.gamePiece.pieceColor,
           pieceType: _move.move.gamePiece.pieceType,
+          moved: true,
         },
       };
       this.state.board[_move.move.currentRank - 1][this._fileToIndex(_move.move.currentFile)] =
@@ -396,7 +721,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
               if (this.canEnPassant(this.state.moves[this.state.moves.length - 1], move.move)) {
                 // capture the pawn piece
                 this.state.board[destToRank - 1][destFileNumber] = undefined;
-                move.move.enPassant = true;
                 return true;
               }
               return false;
@@ -608,6 +932,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
             piece: {
               pieceType: currentCell.piece.pieceType,
               pieceColor: currentCell.piece.pieceColor,
+              moved: true,
             },
           };
           updatedBoard[i][j] = updatedCell;
@@ -633,38 +958,38 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
     // Initialize board with pieces in initial positions
     const initialPositions: { [key: string]: ChessPiece } = {
-      a1: { pieceType: 'R', pieceColor: 'W' },
-      b1: { pieceType: 'N', pieceColor: 'W' },
-      c1: { pieceType: 'B', pieceColor: 'W' },
-      d1: { pieceType: 'Q', pieceColor: 'W' },
-      e1: { pieceType: 'K', pieceColor: 'W' },
-      f1: { pieceType: 'B', pieceColor: 'W' },
-      g1: { pieceType: 'N', pieceColor: 'W' },
-      h1: { pieceType: 'R', pieceColor: 'W' },
-      a2: { pieceType: 'P', pieceColor: 'W' },
-      b2: { pieceType: 'P', pieceColor: 'W' },
-      c2: { pieceType: 'P', pieceColor: 'W' },
-      d2: { pieceType: 'P', pieceColor: 'W' },
-      e2: { pieceType: 'P', pieceColor: 'W' },
-      f2: { pieceType: 'P', pieceColor: 'W' },
-      g2: { pieceType: 'P', pieceColor: 'W' },
-      h2: { pieceType: 'P', pieceColor: 'W' },
-      a7: { pieceType: 'P', pieceColor: 'B' },
-      b7: { pieceType: 'P', pieceColor: 'B' },
-      c7: { pieceType: 'P', pieceColor: 'B' },
-      d7: { pieceType: 'P', pieceColor: 'B' },
-      e7: { pieceType: 'P', pieceColor: 'B' },
-      f7: { pieceType: 'P', pieceColor: 'B' },
-      g7: { pieceType: 'P', pieceColor: 'B' },
-      h7: { pieceType: 'P', pieceColor: 'B' },
-      a8: { pieceType: 'R', pieceColor: 'B' },
-      b8: { pieceType: 'N', pieceColor: 'B' },
-      c8: { pieceType: 'B', pieceColor: 'B' },
-      d8: { pieceType: 'Q', pieceColor: 'B' },
-      e8: { pieceType: 'K', pieceColor: 'B' },
-      f8: { pieceType: 'B', pieceColor: 'B' },
-      g8: { pieceType: 'N', pieceColor: 'B' },
-      h8: { pieceType: 'R', pieceColor: 'B' },
+      a1: { pieceType: 'R', pieceColor: 'W', moved: false },
+      b1: { pieceType: 'N', pieceColor: 'W', moved: false },
+      c1: { pieceType: 'B', pieceColor: 'W', moved: false },
+      d1: { pieceType: 'Q', pieceColor: 'W', moved: false },
+      e1: { pieceType: 'K', pieceColor: 'W', moved: false },
+      f1: { pieceType: 'B', pieceColor: 'W', moved: false },
+      g1: { pieceType: 'N', pieceColor: 'W', moved: false },
+      h1: { pieceType: 'R', pieceColor: 'W', moved: false },
+      a2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      b2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      c2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      d2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      e2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      f2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      g2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      h2: { pieceType: 'P', pieceColor: 'W', moved: false },
+      a7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      b7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      c7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      d7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      e7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      f7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      g7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      h7: { pieceType: 'P', pieceColor: 'B', moved: false },
+      a8: { pieceType: 'R', pieceColor: 'B', moved: false },
+      b8: { pieceType: 'N', pieceColor: 'B', moved: false },
+      c8: { pieceType: 'B', pieceColor: 'B', moved: false },
+      d8: { pieceType: 'Q', pieceColor: 'B', moved: false },
+      e8: { pieceType: 'K', pieceColor: 'B', moved: false },
+      f8: { pieceType: 'B', pieceColor: 'B', moved: false },
+      g8: { pieceType: 'N', pieceColor: 'B', moved: false },
+      h8: { pieceType: 'R', pieceColor: 'B', moved: false },
     };
     Object.entries(initialPositions).forEach(([key, piece]) => {
       const file = key[0] as ChessFilePosition;
@@ -673,7 +998,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         const cell: ChessCell = {
           piece,
         };
-        board[rank - 1][fileToIndex(file)] = cell;
+        board[this._rankToRow(rank)][this._fileToColumn(file)] = cell;
       }
     });
 
@@ -823,27 +1148,287 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
+   * Retunrs wheterh a set of indices are valid in the chess board
+   *
+   * @param rowIndex
+   * @param colIndex
+   */
+  private _validIndex(rowIndex: number, colIndex: number) {
+    return rowIndex <= 7 && rowIndex >= 0 && colIndex <= 7 && colIndex >= 0;
+  }
+
+  /**
+   * Returns whether the given square is under attack by the given player color
+   *
+   * @param rowIndex
+   * @param colIndex
+   * @param color
+   * @param altBoard a alternative board to use for seeing futur effects of moves
+   */
+  public underAttack(
+    rowIndex: number,
+    colIndex: number,
+    player: 'W' | 'B',
+    altBoard?: ChessCell[][],
+  ) {
+    let board: Readonly<ChessCell[][]>;
+    if (altBoard) {
+      board = altBoard;
+    } else {
+      board = this.state.board;
+    }
+    const playerColor = player;
+
+    // check the square is not under attack by a pawn
+    let rightAttackRowI = rowIndex - 1;
+    let rightAttackColI = colIndex + 1;
+    let leftAttackRowI = rowIndex - 1;
+    let leftAttackColI = colIndex - 1;
+    if (playerColor === 'W') {
+      rightAttackRowI = rowIndex - 1;
+      rightAttackColI = colIndex + 1;
+      leftAttackRowI = rowIndex - 1;
+      leftAttackColI = colIndex - 1;
+    } else {
+      rightAttackRowI = rowIndex + 1;
+      rightAttackColI = colIndex + 1;
+      leftAttackRowI = rowIndex + 1;
+      leftAttackColI = colIndex - 1;
+    }
+    if (this._validIndex(rightAttackRowI, rightAttackColI)) {
+      if (
+        board[rightAttackRowI][rightAttackColI] &&
+        board[rightAttackRowI][rightAttackColI]?.piece.pieceColor !== playerColor &&
+        board[rightAttackRowI][rightAttackColI]?.piece.pieceType === 'P'
+      ) {
+        return true;
+      }
+    }
+    if (this._validIndex(leftAttackRowI, leftAttackColI)) {
+      if (
+        board[leftAttackRowI][leftAttackColI] &&
+        board[leftAttackRowI][leftAttackColI]?.piece.pieceColor !== playerColor &&
+        board[leftAttackRowI][leftAttackColI]?.piece.pieceType === 'P'
+      ) {
+        return true;
+      }
+    }
+
+    // check square is in attack by knight
+    const knightMoves = [
+      { row: -2, col: -1 },
+      { row: -2, col: 1 },
+      { row: -1, col: -2 },
+      { row: -1, col: 2 },
+      { row: 2, col: -1 },
+      { row: 2, col: 1 },
+      { row: 1, col: -2 },
+      { row: 1, col: -2 },
+    ];
+    for (let i = 0; i < knightMoves.length; i++) {
+      const knightMove = knightMoves[i];
+      const checkRowIndex = rowIndex + knightMove.row;
+      const checkColIndex = rowIndex + knightMove.col;
+      if (this._validIndex(checkRowIndex, checkColIndex)) {
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceType === 'N'
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // check square in attack digonally or linearly (by bishop or queen)
+    const initialPaths = [
+      { row: -1, col: 1, type: 'D' },
+      { row: -1, col: -1, type: 'D' },
+      { row: 1, col: 1, type: 'D' },
+      { row: 1, col: -1, type: 'D' },
+      { row: -1, col: 0, type: 'L' },
+      { row: 1, col: 0, type: 'L' },
+      { row: 0, col: 1, type: 'L' },
+      { row: 0, col: -1, type: 'L' },
+    ];
+    for (let i = 0; i < initialPaths.length; i++) {
+      const initialPath = initialPaths[i];
+      let checkRowIndex = rowIndex + initialPath.row;
+      let checkColIndex = rowIndex + initialPath.col;
+      let checkedKing = false;
+      while (this._validIndex(checkRowIndex, checkColIndex)) {
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor === playerColor
+        ) {
+          break;
+        }
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          initialPath.type === 'D'
+        ) {
+          if (
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'B' ||
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
+          ) {
+            return true;
+          }
+          if (!checkedKing && board[checkRowIndex][checkColIndex]?.piece.pieceType === 'K') {
+            return true;
+          }
+        }
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          initialPath.type === 'H'
+        ) {
+          if (
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'R' ||
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
+          ) {
+            return true;
+          }
+          if (!checkedKing && board[checkRowIndex][checkColIndex]?.piece.pieceType === 'K') {
+            return true;
+          }
+        }
+        checkRowIndex += initialPath.row;
+        checkColIndex += initialPath.col;
+        if (!checkedKing) {
+          checkedKing = true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Returns whether a certain player is in check
    *
    * @param player the player to check if in check
    */
-  public isKingInCheck(player: PlayerID) {
+  public isKingInCheck(player: PlayerID, tempBoard?: ChessCell[][]) {
+    let board: Readonly<ChessCell[][]>;
+    if (tempBoard) {
+      board = tempBoard;
+    } else {
+      board = this.state.board;
+    }
     const playerColor = this._playerColor(player);
     const kingLocation = this._getKingPosition(playerColor);
-    for (let i = 0; i < 8; i++) {
-      const boardRow = this.state.board[i];
-      for (let j = 0; j < 8; j++) {
-        if (boardRow[j] && boardRow[j]?.piece.pieceColor !== playerColor) {
-          const moves = this.possibleMoves(this._rowToRank(i), this._columnToFile(j));
-          for (let k = 0; k < moves.length; k++) {
-            if (
-              moves[k].destinationFile === kingLocation.file &&
-              moves[k].destinationRank === kingLocation.rank
-            ) {
-              return true;
-            }
+    const kingRow = this._rankToRow(kingLocation.rank);
+    const colIndex = this._fileToColumn(kingLocation.file);
+
+    // check king is not checked by a pawn
+    let rightAttackRowI = kingRow - 1;
+    let rightAttackColI = colIndex + 1;
+    let leftAttackRowI = kingRow - 1;
+    let leftAttackColI = colIndex - 1;
+    if (playerColor === 'W') {
+      rightAttackRowI = kingRow - 1;
+      rightAttackColI = colIndex + 1;
+      leftAttackRowI = kingRow - 1;
+      leftAttackColI = colIndex - 1;
+    } else {
+      rightAttackRowI = kingRow + 1;
+      rightAttackColI = colIndex + 1;
+      leftAttackRowI = kingRow + 1;
+      leftAttackColI = colIndex - 1;
+    }
+    if (this._validIndex(rightAttackRowI, rightAttackColI)) {
+      if (
+        board[rightAttackRowI][rightAttackColI] &&
+        board[rightAttackRowI][rightAttackColI]?.piece.pieceColor !== playerColor &&
+        board[rightAttackRowI][rightAttackColI]?.piece.pieceType === 'P'
+      ) {
+        return true;
+      }
+    }
+    if (this._validIndex(leftAttackRowI, leftAttackColI)) {
+      if (
+        board[leftAttackRowI][leftAttackColI] &&
+        board[leftAttackRowI][leftAttackColI]?.piece.pieceColor !== playerColor &&
+        board[leftAttackRowI][leftAttackColI]?.piece.pieceType === 'P'
+      ) {
+        return true;
+      }
+    }
+
+    // check king in attack by knight
+    const knightMoves = [
+      { row: -2, col: -1 },
+      { row: -2, col: 1 },
+      { row: -1, col: -2 },
+      { row: -1, col: 2 },
+      { row: 2, col: -1 },
+      { row: 2, col: 1 },
+      { row: 1, col: -2 },
+      { row: 1, col: -2 },
+    ];
+    for (let i = 0; i < knightMoves.length; i++) {
+      const knightMove = knightMoves[i];
+      const checkRowIndex = kingRow + knightMove.row;
+      const checkColIndex = kingRow + knightMove.col;
+      if (this._validIndex(checkRowIndex, checkColIndex)) {
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceType === 'N'
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // check king in attack digonally or linearly (by bishop or queen)
+    const initialPaths = [
+      { row: -1, col: 1, type: 'D' },
+      { row: -1, col: -1, type: 'D' },
+      { row: 1, col: 1, type: 'D' },
+      { row: 1, col: -1, type: 'D' },
+      { row: -1, col: 0, type: 'L' },
+      { row: 1, col: 0, type: 'L' },
+      { row: 0, col: 1, type: 'L' },
+      { row: 0, col: -1, type: 'L' },
+    ];
+    for (let i = 0; i < initialPaths.length; i++) {
+      const initialPath = initialPaths[i];
+      let checkRowIndex = kingRow + initialPath.row;
+      let checkColIndex = kingRow + initialPath.col;
+      while (this._validIndex(checkRowIndex, checkColIndex)) {
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor === playerColor
+        ) {
+          break;
+        }
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          initialPath.type === 'D'
+        ) {
+          if (
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'B' ||
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
+          ) {
+            return true;
           }
         }
+        if (
+          board[checkRowIndex][checkColIndex] &&
+          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
+          initialPath.type === 'H'
+        ) {
+          if (
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'R' ||
+            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
+          ) {
+            return true;
+          }
+        }
+        checkRowIndex += initialPath.row;
+        checkColIndex += initialPath.col;
       }
     }
     return false;
@@ -874,12 +1459,32 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   /**
    * Determines if a player ('W' or 'B') can perform castling on 'K' or 'Q' side
    * Castling is a move that involves the king and either of the original rooks.
-   * TODO: remove _ from parameters after implementation
    * @returns {boolean} - True if castling is possible, otherwise false.
    * @throws {Error} - Throws an error if the game state is not valid.
    */
-  public canCastle(_player: 'W' | 'B', _side: 'K' | 'Q'): boolean {
-    return true; // Default return value
+  public canCastle(player: 'W' | 'B', side: 'K' | 'Q'): boolean {
+    const playerColor = this._playerColor(player);
+    const kingLocation = this._getKingPosition(playerColor);
+    const kingRow = this._rankToRow(kingLocation.rank);
+    const kingCol = this._fileToColumn(kingLocation.file);
+    let canCastle = true;
+    const { board } = this.state;
+    const rookRowIndex = kingRow;
+    let rookColIndex;
+    if (side === 'K') {
+      rookColIndex = 7;
+    } else {
+      rookColIndex = 0;
+    }
+    if (board[kingRow][kingCol]?.piece.moved && board[kingRow][kingCol]?.piece.moved === true) {
+      canCastle = false;
+    } else if (
+      board[rookRowIndex][rookColIndex]?.piece.moved &&
+      board[rookRowIndex][rookColIndex]?.piece.moved === true
+    ) {
+      canCastle = false;
+    }
+    return canCastle; // Default return value
   }
 
   /**

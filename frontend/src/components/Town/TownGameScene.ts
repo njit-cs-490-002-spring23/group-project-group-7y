@@ -17,7 +17,7 @@ function interactableTypeForObjectType(type: string): any {
     return ConversationArea;
   } else if (type === 'Transporter') {
     return Transporter;
-  } else if (type == 'ViewingArea') {
+  } else if (type === 'ViewingArea') {
     return ViewingArea;
   } else if (type === 'GameArea') {
     return GameArea;

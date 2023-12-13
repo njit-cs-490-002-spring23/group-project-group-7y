@@ -13,12 +13,12 @@ describe('ChessGame', () => {
   describe('board', () => {
     it('should initialize with the correct starting positions', () => {
       const { board } = game.state;
-      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W' } }); // White rook at A1
-      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W' } }); // White rook at H1
-      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B' } }); // Black rook at A8
-      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B' } }); // Black rook at H8
-      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W' } }); // White Pawn at B2
-      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'B' } }); // Black Pawn at G7
+      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at A1
+      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at H1
+      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // Black rook at A8
+      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // Black rook at H8
+      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'B', moved: false } }); // White Pawn at B2
+      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W', moved: false } }); // Black Pawn at G7
     });
   });
 
@@ -26,10 +26,10 @@ describe('ChessGame', () => {
     it('should return the correct position of the king', () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - we are testing spying on a private method
-      const whiteKingPosition = game._getKingPosition('W');
+      const whiteKingPosition = game._getKingPosition('B');
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - we are testing spying on a private method
-      const blackKingPosition = game._getKingPosition('B');
+      const blackKingPosition = game._getKingPosition('W');
       expect(whiteKingPosition).toEqual({ rank: 1, file: 'e' }); // White King position
       expect(blackKingPosition).toEqual({ rank: 8, file: 'e' }); // Black King position
     });
@@ -70,7 +70,7 @@ describe('ChessGame', () => {
         game.applyMove({
           playerID: whitePlayerId,
           move: {
-            gamePiece: { pieceType: 'P', pieceColor: 'W' },
+            gamePiece: { pieceType: 'P', pieceColor: 'W', moved: true },
             currentRank: 2,
             currentFile: 'f',
             destinationRank: 3,
@@ -81,7 +81,7 @@ describe('ChessGame', () => {
         game.applyMove({
           playerID: blackPlayerId,
           move: {
-            gamePiece: { pieceType: 'P', pieceColor: 'B' },
+            gamePiece: { pieceType: 'P', pieceColor: 'B', moved: true },
             currentRank: 7,
             currentFile: 'e',
             destinationRank: 5,
@@ -92,7 +92,7 @@ describe('ChessGame', () => {
         game.applyMove({
           playerID: whitePlayerId,
           move: {
-            gamePiece: { pieceType: 'P', pieceColor: 'W' },
+            gamePiece: { pieceType: 'P', pieceColor: 'W', moved: true },
             currentRank: 2,
             currentFile: 'g',
             destinationRank: 4,
@@ -103,7 +103,7 @@ describe('ChessGame', () => {
         game.applyMove({
           playerID: blackPlayerId,
           move: {
-            gamePiece: { pieceType: 'Q', pieceColor: 'B' },
+            gamePiece: { pieceType: 'Q', pieceColor: 'B', moved: true },
             currentRank: 8,
             currentFile: 'h',
             destinationRank: 4,
@@ -139,15 +139,72 @@ describe('ChessGame', () => {
         expect(game.isKingInCheck(player2.id)).toBe(false);
       });
     });
+
+    describe('Given a possible moves check', () => {
+      it('should give the right moves for a pawn', () => {
+        const moves = game.possibleMoves(2, 'a');
+        expect(moves).toEqual([
+          {
+            gamePiece: { pieceColor: 'W', pieceType: 'P', moved: false },
+            currentRank: 2,
+            currentFile: 'a',
+            destinationRank: 3,
+            destinationFile: 'a',
+          },
+          {
+            gamePiece: { pieceColor: 'W', pieceType: 'P', moved: false },
+            currentRank: 2,
+            currentFile: 'a',
+            destinationRank: 4,
+            destinationFile: 'a',
+          },
+        ]);
+      });
+      it('should give the zero moves for a starting king', () => {
+        const moves = game.possibleMoves(1, 'e');
+        expect(moves.length).toEqual(0);
+      });
+      it('should give the zero moves for a starting queen', () => {
+        const moves = game.possibleMoves(1, 'd');
+        expect(moves.length).toEqual(0);
+      });
+      it('should give the zero moves for a starting rook', () => {
+        const moves = game.possibleMoves(1, 'a');
+        expect(moves.length).toEqual(0);
+      });
+      it('should give the zero moves for a starting bishop', () => {
+        const moves = game.possibleMoves(1, 'c');
+        expect(moves.length).toEqual(0);
+      });
+      it('should give the two moves for a starting knight', () => {
+        const moves = game.possibleMoves(1, 'b');
+        expect(moves.length).toEqual(2);
+        expect(moves).toEqual([
+          {
+            gamePiece: { pieceColor: 'W', pieceType: 'N', moved: false },
+            currentRank: 1,
+            currentFile: 'b',
+            destinationRank: 3,
+            destinationFile: 'a',
+          },
+          {
+            gamePiece: { pieceColor: 'W', pieceType: 'N', moved: false },
+            currentRank: 1,
+            currentFile: 'b',
+            destinationRank: 3,
+            destinationFile: 'c',
+          },
+        ]);
+      });
+    });
     describe('Given a Valid Pawn Move', () => {
       it('should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'a',
           destinationRank: 4,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         expect(game.state.board[move.currentRank - 1][0]?.piece.pieceType).toEqual('P');
         game.applyMove({
@@ -161,12 +218,11 @@ describe('ChessGame', () => {
       });
       it('given a valid move for en passant', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'e',
           destinationRank: 4,
           destinationFile: 'e',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -178,12 +234,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move.destinationRank - 1][4]?.piece.pieceType).toEqual('P');
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 6,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -195,12 +250,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move2.destinationRank - 1][0]?.piece.pieceType).toEqual('P');
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 4,
           currentFile: 'e',
           destinationRank: 5,
           destinationFile: 'e',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -213,12 +267,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][4]?.piece.pieceType).toEqual('P');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'd',
           destinationRank: 5,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -231,12 +284,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move4.destinationRank - 1][3]?.piece.pieceType).toEqual('P');
 
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 5,
           currentFile: 'e',
           destinationRank: 6,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -251,14 +303,13 @@ describe('ChessGame', () => {
       });
     });
     describe('Given Invalid Pawn Move', () => {
-      it('should return an error if the player moves a pi1ece that does not belong to them', () => {
+      it('should return an error if the player moves a piece that does not belong to them', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'a',
           destinationRank: 4,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         expect(game.state.board[move.currentRank - 1][0]?.piece.pieceType).toEqual('P');
         game.applyMove({
@@ -271,12 +322,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move.destinationRank - 1][0]?.piece.pieceType).toEqual('P');
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'b',
           destinationRank: 4,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -288,12 +338,11 @@ describe('ChessGame', () => {
       });
       it('should return an error if the player moves a piece when it is not their turn', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'a',
           destinationRank: 4,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -301,12 +350,11 @@ describe('ChessGame', () => {
           move,
         });
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'b',
           destinationRank: 4,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -318,12 +366,11 @@ describe('ChessGame', () => {
       });
       it('should return an error if the pawn changes rank and there is no capture, en passant', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'a',
           destinationRank: 3,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -335,12 +382,11 @@ describe('ChessGame', () => {
       });
       it('when a piece is in front of the pawn the pawn can not move', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -352,12 +398,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move.destinationRank - 1][2]?.piece.pieceType).toEqual('N');
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'N' },
+          gamePiece: { pieceColor: 'B', pieceType: 'N', moved: true },
           currentRank: 8,
           currentFile: 'g',
           destinationRank: 6,
           destinationFile: 'f',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -369,12 +414,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move2.destinationRank - 1][5]?.piece.pieceType).toEqual('N');
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'c',
           destinationRank: 4,
           destinationFile: 'c',
-          enPassant: undefined,
         };
 
         expect(() =>
@@ -389,12 +433,11 @@ describe('ChessGame', () => {
     describe('Given A Valid Knight Move', () => {
       it('Should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -407,12 +450,11 @@ describe('ChessGame', () => {
       });
       it('Given a series of knight moves should update the chess board with the moves', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -424,12 +466,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move.destinationRank - 1][2]?.piece.pieceType).toEqual('N');
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'N' },
+          gamePiece: { pieceColor: 'B', pieceType: 'N', moved: true },
           currentRank: 8,
           currentFile: 'g',
           destinationRank: 6,
           destinationFile: 'f',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -441,12 +482,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move2.destinationRank - 1][5]?.piece.pieceType).toEqual('N');
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 3,
           currentFile: 'c',
           destinationRank: 5,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -458,12 +498,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][3]?.piece.pieceType).toEqual('N');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'N' },
+          gamePiece: { pieceColor: 'B', pieceType: 'N', moved: true },
           currentRank: 6,
           currentFile: 'f',
           destinationRank: 5,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -478,12 +517,11 @@ describe('ChessGame', () => {
     describe('Give an Invalid Knight Move', () => {
       it('should return an error that the move is invalid when it tries to land on a spot the player owns', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
           currentFile: 'b',
           destinationRank: 2,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -495,12 +533,11 @@ describe('ChessGame', () => {
       });
       it('should return an error that move is invalid given incorrect movement', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -508,12 +545,11 @@ describe('ChessGame', () => {
           move,
         });
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'N' },
+          gamePiece: { pieceColor: 'B', pieceType: 'N', moved: true },
           currentRank: 8,
           currentFile: 'b',
           destinationRank: 6,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -522,12 +558,11 @@ describe('ChessGame', () => {
         });
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 3,
           currentFile: 'c',
           destinationRank: 4,
           destinationFile: 'f',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -538,12 +573,11 @@ describe('ChessGame', () => {
         ).toThrow('Invalid Move');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 3,
           currentFile: 'c',
           destinationRank: 5,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -553,12 +587,11 @@ describe('ChessGame', () => {
           }),
         ).toThrow('Invalid Move');
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'N' },
+          gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 3,
           currentFile: 'c',
           destinationRank: 6,
           destinationFile: 'd',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -572,26 +605,23 @@ describe('ChessGame', () => {
     describe('Given a Valid Bishop Move', () => {
       it('should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
           playerID: player1.id,
           move,
         });
-
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 6,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -600,14 +630,13 @@ describe('ChessGame', () => {
         });
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'B' },
+          gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 1,
           currentFile: 'c',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
-        expect(game.state.board[move3.currentRank - 1][2]?.piece.pieceType).toEqual('B');
+        expect(game.state.board[move3.currentRank - 2][2]?.piece.pieceType).toEqual('B');
         game.applyMove({
           gameID: game.id,
           playerID: player1.id,
@@ -618,12 +647,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][0]?.piece.pieceType).toEqual('B');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 6,
           currentFile: 'a',
           destinationRank: 5,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -635,12 +663,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move4.destinationRank - 1][0]?.piece.pieceType).toEqual('P');
 
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'B' },
+          gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 3,
           currentFile: 'a',
           destinationRank: 7,
           destinationFile: 'e',
-          enPassant: undefined,
         };
         expect(game.state.board[move5.destinationRank - 1][4]?.piece.pieceType).toEqual('P');
         expect(game.state.board[move5.destinationRank - 1][4]?.piece.pieceColor).toEqual('B');
@@ -656,12 +683,11 @@ describe('ChessGame', () => {
     describe('Given an invalid bishop move', () => {
       it('should throw an invalid move if pieces are in the way of the destination', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'B' },
+          gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 1,
           currentFile: 'c',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         // If own pieces in the way
         expect(() =>
@@ -673,12 +699,11 @@ describe('ChessGame', () => {
         ).toThrow('Invalid Move');
 
         const move1: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'b',
           destinationRank: 3,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -687,12 +712,11 @@ describe('ChessGame', () => {
         });
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 6,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -701,12 +725,11 @@ describe('ChessGame', () => {
         });
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'B' },
+          gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 1,
           currentFile: 'c',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -715,12 +738,11 @@ describe('ChessGame', () => {
         });
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 6,
           currentFile: 'a',
           destinationRank: 5,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -729,12 +751,11 @@ describe('ChessGame', () => {
         });
 
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'B' },
+          gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 3,
           currentFile: 'a',
           destinationRank: 8,
           destinationFile: 'f',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -748,12 +769,11 @@ describe('ChessGame', () => {
     describe('Given a Valid Queen Move', () => {
       it('should update the chess board and moves with the valid movement', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'c',
           destinationRank: 3,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         expect(game.state.moves.length).toEqual(0);
         expect(game.state.board[move.currentRank - 1][2]?.piece.pieceType).toEqual('P');
@@ -768,12 +788,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move.currentRank - 1][2]).toBeUndefined();
 
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'h',
           destinationRank: 6,
           destinationFile: 'h',
-          enPassant: undefined,
         };
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceType).toEqual('P');
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceColor).toEqual('B');
@@ -788,12 +807,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move2.destinationRank - 1][7]?.piece.pieceColor).toEqual('B');
 
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'Q' },
+          gamePiece: { pieceColor: 'W', pieceType: 'Q', moved: true },
           currentRank: 1,
           currentFile: 'd',
           destinationRank: 4,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         expect(game.state.board[move3.currentRank - 1][3]?.piece.pieceType).toEqual('Q');
         expect(game.state.board[move3.currentRank - 1][3]?.piece.pieceColor).toEqual('W');
@@ -809,12 +827,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][0]?.piece.pieceType).toEqual('Q');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 6,
           currentFile: 'h',
           destinationRank: 5,
           destinationFile: 'h',
-          enPassant: undefined,
         };
         expect(game.state.board[move4.currentRank - 1][7]?.piece.pieceType).toEqual('P');
         expect(game.state.board[move4.currentRank - 1][7]?.piece.pieceColor).toEqual('B');
@@ -830,12 +847,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move4.destinationRank - 1][7]?.piece.pieceType).toEqual('P');
 
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'Q' },
+          gamePiece: { pieceColor: 'W', pieceType: 'Q', moved: true },
           currentRank: 4,
           currentFile: 'a',
           destinationRank: 4,
           destinationFile: 'h',
-          enPassant: undefined,
         };
 
         game.applyMove({
@@ -851,12 +867,12 @@ describe('ChessGame', () => {
         expect(game.state.board[move5.destinationRank][7]?.piece.pieceType).toEqual('P');
 
         const move6: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
+
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 5,
           destinationFile: 'a',
-          enPassant: undefined,
         };
 
         game.applyMove({
@@ -866,12 +882,11 @@ describe('ChessGame', () => {
         });
 
         const move7: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'Q' },
+          gamePiece: { pieceColor: 'W', pieceType: 'Q', moved: true },
           currentRank: 4,
           currentFile: 'h',
           destinationRank: 5,
           destinationFile: 'h',
-          enPassant: undefined,
         };
 
         expect(game.state.board[move7.destinationRank - 1][7]?.piece.pieceColor).toEqual('B');
@@ -890,12 +905,11 @@ describe('ChessGame', () => {
     describe('Given an Invalid Queen Move', () => {
       it('should return an error that the move is invalid', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'Q' },
+          gamePiece: { pieceColor: 'W', pieceType: 'Q', moved: true },
           currentRank: 1,
           currentFile: 'd',
           destinationRank: 2,
           destinationFile: 'c',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
@@ -909,12 +923,11 @@ describe('ChessGame', () => {
     describe('Given a Valid Rook Moove', () => {
       it('should update the chess board and the moves with the move', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'P' },
+          gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
           currentFile: 'a',
           destinationRank: 4,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -922,12 +935,11 @@ describe('ChessGame', () => {
           move,
         });
         const move2: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'a',
           destinationRank: 5,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -935,12 +947,11 @@ describe('ChessGame', () => {
           move: move2,
         });
         const move3: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'R' },
+          gamePiece: { pieceColor: 'W', pieceType: 'R', moved: true },
           currentRank: 1,
           currentFile: 'a',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -952,12 +963,11 @@ describe('ChessGame', () => {
         expect(game.state.board[move3.destinationRank - 1][0]?.piece.pieceType).toEqual('R');
 
         const move4: ChessMove = {
-          gamePiece: { pieceColor: 'B', pieceType: 'P' },
+          gamePiece: { pieceColor: 'B', pieceType: 'P', moved: true },
           currentRank: 7,
           currentFile: 'b',
           destinationRank: 5,
           destinationFile: 'b',
-          enPassant: undefined,
         };
         game.applyMove({
           gameID: game.id,
@@ -965,12 +975,11 @@ describe('ChessGame', () => {
           move: move4,
         });
         const move5: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'R' },
+          gamePiece: { pieceColor: 'W', pieceType: 'R', moved: true },
           currentRank: 3,
           currentFile: 'a',
           destinationRank: 3,
           destinationFile: 'h',
-          enPassant: undefined,
         };
         expect(game.state.board[move5.currentRank - 1][0]?.piece.pieceType).toEqual('R');
         game.applyMove({
@@ -986,12 +995,11 @@ describe('ChessGame', () => {
     describe('Given an Invalid Rook Move', () => {
       it('should return an error and not update the moves with the invalid move', () => {
         const move: ChessMove = {
-          gamePiece: { pieceColor: 'W', pieceType: 'R' },
+          gamePiece: { pieceColor: 'W', pieceType: 'R', moved: true },
           currentRank: 1,
           currentFile: 'a',
           destinationRank: 3,
           destinationFile: 'a',
-          enPassant: undefined,
         };
         expect(() =>
           game.applyMove({
