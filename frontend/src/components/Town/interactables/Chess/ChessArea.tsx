@@ -18,8 +18,6 @@ import {
 } from '@chakra-ui/react';
 import Leaderboard, { LeaderBoardProp } from './Leaderboard';
 import Multiplayer from './Multiplayer';
-import GameReview from './GameReview';
-import GameReviewDetail from './GameReviewDetal';
 import useTownController from '../../../../hooks/useTownController';
 import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
@@ -109,13 +107,11 @@ function JoinButton(props: {
   return button;
 }
 
-
-
-function ChessArea(): JSX.Element {
+function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.Element {
+  const gameAreaController = useInteractableAreaController<ChessAreaController>(interactableID);
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
-  const [currentPage, setCurrentPage] = useState('mainMenu');
+  const [currentPage, setcurrentPage] = useState('mainMenu');
   const townController = useTownController();
-  const [selectedGame, setSelectedGame] = useState<GameDetail | null>(null);
 
   const mainMenuPage = () => {
     setcurrentPage('mainMenu');
@@ -131,10 +127,6 @@ function ChessArea(): JSX.Element {
     const results = generateDummyChessResults();
     setChessResults(results);
   }, []);
-  const navigateTo = (page: string) => {
-    setCurrentPage(page);
-  };
-
 
   //diaplay proper page
   if (currentPage === 'leaderboard') {
@@ -179,7 +171,6 @@ function ChessArea(): JSX.Element {
       </Box>
     );
   }
-  return <>{content}</>;
 }
 
 /**
