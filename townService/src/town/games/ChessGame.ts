@@ -765,20 +765,22 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   public isCheckmate(): boolean {
     // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
-    // Check if the king is currently in check
+ 
     if (!this.isKingInCheck(currentPlayerColor)) {
       return false;
     }
-    // Get all possible moves for the current player
+
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
+
     // Test each move to see if it can take the king out of check
     for (const move of allPossibleMoves) {
       // Backup the current state
       const originalState = { ...this.state };
       // Apply the move temporarily
       this.updateChessBoard(move);
-      // Check if the king is still in check after the move
+
       const stillInCheck = this.isKingInCheck(currentPlayerColor);
+      
       // Restore the original state
       this.state = originalState;
       // If the king is not in check after this move, it's not checkmate
