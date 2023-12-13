@@ -799,6 +799,7 @@ describe('ChessGame', () => {
           currentFile: 'h',
           destinationRank: 6,
           destinationFile: 'h',
+        };
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceType).toEqual('P');
         expect(game.state.board[move2.currentRank - 1][7]?.piece.pieceColor).toEqual('B');
 
