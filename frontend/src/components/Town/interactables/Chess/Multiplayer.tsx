@@ -1,9 +1,18 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect } from 'react';
 import { ChessCell } from '../../../../types/CoveyTownSocket';
-import { Box, Button, Container, chakra, Stack, Image } from '@chakra-ui/react';
+import { Box, Button, Container, chakra, Stack, Image, background } from '@chakra-ui/react';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import useTownController from '../../../../hooks/useTownController';
+
+const StyledChessRow = chakra(Box, {
+  baseStyle: {
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    height: '12.5%',
+  },
+});
 
 /**
  * A component that will render a single cell in the Chess board, styled
@@ -12,18 +21,20 @@ const StyledChessSquare = chakra(Button, {
   baseStyle: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: '40px',
-    height: '40px',
+    width: '12.5%',
+    height: '100%',
   },
 });
+
 /**
  * A component that will render the Chess board, styled
  */
 const StyledChessBoard = chakra(Container, {
   baseStyle: {
+    bg: 'transparent',
     display: 'flex',
-    width: '400px',
-    height: '400px',
+    width: '350px',
+    height: '350px',
     padding: '5px',
     flexWrap: 'wrap',
   },
@@ -59,7 +70,7 @@ export default function Multiplayer(props: {
     };
   }, [gameAreaController]);
   const townController = useTownController();
-  let opponent: string;
+  let opponent: string | undefined;
 
   if (gameAreaController.status === 'IN_PROGRESS') {
     if (gameAreaController.white?.id === townController.ourPlayer.id) {
@@ -78,40 +89,29 @@ export default function Multiplayer(props: {
           </strong>
         </Box>
         <StyledChessBoard justifyContent='center'>
-          {gameBoard.map((row, rowIndex) => {
-            console.log(row);
-            return row.map((cell, colIndex) => {
-              const color = cell?.piece.pieceColor;
-              const type = cell?.piece.pieceType;
-              console.log(`url('/assets/chessPieces/${color}_${type}.png') no-repeat center/cover`);
-
-              let squareColor: string;
-              if (rowIndex % 2 === 0) {
-                if (colIndex % 2 === 0) {
-                  squareColor = 'white';
-                } else {
-                  squareColor = 'green';
-                }
-              } else {
-                if (colIndex % 2 === 1) {
-                  squareColor = 'white';
-                } else {
-                  squareColor = 'green';
-                }
-              }
-              return (
-                <StyledChessSquare
-                  background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
-                  onClick={async () => {}}
-                  isDisabled={!ourTurn}
-                  key={colIndex}
-                  bgColor={squareColor}
-                  opacity='0.9'
-                  aria-label={`Cell ${rowIndex},${colIndex}`}></StyledChessSquare>
-              );
-            });
-          })}
+          {gameBoard.map((row, rowIndex) => (
+            <StyledChessRow key={rowIndex} id={`${rowIndex}`}>
+              {row.map((cell, colIndex) => {
+                const color = cell?.piece.pieceColor;
+                const type = cell?.piece.pieceType;
+                const squareColor = (rowIndex + colIndex) % 2 === 0 ? 'white' : 'green';
+                return (
+                  <StyledChessSquare
+                    id={`${rowIndex},${colIndex}`}
+                    background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
+                    onClick={async () => {}}
+                    isDisabled={false}
+                    key={colIndex}
+                    bgColor={squareColor}
+                    opacity='1'
+                    aria-label={`Cell ${rowIndex},${colIndex}`}>
+                  </StyledChessSquare>
+                );
+              })}
+            </StyledChessRow>
+          ))}
         </StyledChessBoard>
+
       </Container>
     </>
   );
