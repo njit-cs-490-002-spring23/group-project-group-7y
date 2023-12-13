@@ -780,7 +780,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       this.updateChessBoard(move);
 
       const stillInCheck = this.isKingInCheck(currentPlayerColor);
-      
+
       // Restore the original state
       this.state = originalState;
       // If the king is not in check after this move, it's not checkmate
