@@ -33,19 +33,19 @@ type GameHistories = {
 const fakeGameHistories: GameHistories = {
   game1: {
     date: '2023-04-01',
-    opponent: 'PlayerOne',
+    opponent: 'Person',
     result: 'Win',
     moves: ['e4 e5', 'Nf3 Nc6', 'Bb5 a6'],
   },
   game2: {
     date: '2023-04-02',
-    opponent: 'PlayerTwo',
+    opponent: 'Person1',
     result: 'Loss',
     moves: ['d4 d5', 'c4 c6', 'Nc3 dxc4'],
   },
   game3: {
     date: '2023-04-03',
-    opponent: 'PlayerThree',
+    opponent: 'Person2',
     result: 'Tie',
     moves: ['e4 c5', 'Nf3 e6', 'd4 cxd4'],
   },
