@@ -104,8 +104,7 @@ export default function Multiplayer(props: {
                     key={colIndex}
                     bgColor={squareColor}
                     opacity='1'
-                    aria-label={`Cell ${rowIndex},${colIndex}`}>
-                  </StyledChessSquare>
+                    aria-label={`Cell ${rowIndex},${colIndex}`}></StyledChessSquare>
                 );
               })}
             </StyledChessRow>
