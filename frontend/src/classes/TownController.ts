@@ -27,6 +27,7 @@ import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
 import ChessAreaController from './interactable/ChessAreaController';
 import GameArea from '../components/Town/interactables/GameArea';
+import GameAreaController, { GameEventTypes } from './interactable/GameAreaController';
 import { nanoid } from 'nanoid';
 
 const CALCULATE_NEARBY_PLAYERS_DELAY = 300;
@@ -201,10 +202,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
   private _gameAreas: ChessAreaController[] = [];
 
-  public get gameAreas() {
-    return this._gameAreas;
-  }
-
   public constructor({ userName, townID, loginController }: ConnectionProperties) {
     super();
     this._townID = townID;
@@ -306,6 +303,14 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     const ret = this._playersInternal.find(eachPlayer => eachPlayer.id === id);
     assert(ret);
     return ret;
+  }
+
+  public get gameAreas() {
+    return this._gameAreas;
+  }
+
+  public set gameAreas(newGameAreas: ChessAreaController[]) {
+    this._gameAreas = newGameAreas;
   }
 
   public get conversationAreas() {
@@ -612,9 +617,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this._gameAreas = [];
         initialData.interactables.forEach(eachInteractable => {
           if (isChessArea(eachInteractable)) {
-            this._gameAreas.push(
-              new ChessAreaController(eachInteractable.id, eachInteractable, this),
-            );
+            const gameArea = new ChessAreaController(eachInteractable.id, eachInteractable, this);
+            console.log(gameArea);
+            this._gameAreas.push(gameArea);
           } else if (isConversationArea(eachInteractable)) {
             this._conversationAreasInternal.push(
               ConversationAreaController.fromConversationAreaModel(
@@ -638,24 +643,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
-   * Retrives the game area controller corresponding to a game area by ID, or
-   * throws an error if the game area controller does not exist
-   *
-   * @param gameArea
-   * @returns
-   */
-  public getGameAreaController(gameArea: GameArea): ChessAreaController {
-    const existingController = this._gameAreas.find(
-      eachExistingArea => eachExistingArea.id === gameArea.name,
-    );
-    if (existingController) {
-      return existingController as ChessAreaController;
-    } else {
-      throw new Error('Game area controller not created');
-    }
-  }
-
-  /**
    * Retrieve the viewing area controller that corresponds to a viewingAreaModel, creating one if necessary
    *
    * @param viewingArea
@@ -676,6 +663,24 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       });
       this._viewingAreas.push(newController);
       return newController;
+    }
+  }
+
+  /**
+   * Retrives the game area controller corresponding to a game area by ID, or
+   * throws an error if the game area controller does not exist
+   *
+   * @param gameArea
+   * @returns
+   */
+  public getGameAreaController(gameArea: GameArea): ChessAreaController {
+    const existingController = this._gameAreas.find(
+      eachExistingArea => eachExistingArea.id === gameArea.name,
+    );
+    if (existingController instanceof ChessAreaController) {
+      return existingController as ChessAreaController;
+    } else {
+      throw new Error('Game area controller not created');
     }
   }
 

@@ -48,8 +48,8 @@ export default function TownMap(): JSX.Element {
 
   return (
     <div id='app-container'>
-      <NewConversationModal />
       <ChessAreaWrapper />
+      <NewConversationModal />
 
       <div id='map-container' />
       <div id='social-container'>

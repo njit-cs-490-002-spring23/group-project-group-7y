@@ -57,7 +57,14 @@ const HomeScreenButton = chakra(Button, {
  *  @param gameAreaController the controller for the TicTacToe game
  * @returns the JSX.Element with possibly a button
  */
-function JoinButton({ gameAreaController, mainMenuPage }: ChessGameProp): JSX.Element {
+function JoinButton(props: {
+  gameAreaController: ChessAreaController;
+  multiplayerPage: () => void;
+  mainMenuPage: () => void;
+}): JSX.Element {
+  const gameAreaController = props.gameAreaController;
+  const mainMenu = () => props.mainMenuPage();
+  const multiplayer = () => props.multiplayerPage();
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [buttonText, setButtonText] = useState('Join Multiplayer');
@@ -75,11 +82,11 @@ function JoinButton({ gameAreaController, mainMenuPage }: ChessGameProp): JSX.El
           setIsDisabled(true);
           setIsLoading(true);
           setButtonText('Loading');
+          /* console.log(gameAreaController);
           await gameAreaController
             .joinGame()
-            .then(() => mainMenuPage())
+            .then(() => multiplayer())
             .catch(e => {
-              mainMenuPage();
               console.log(e);
               displayToast({
                 title: 'Join Failed',
@@ -87,6 +94,8 @@ function JoinButton({ gameAreaController, mainMenuPage }: ChessGameProp): JSX.El
                 status: 'error',
               });
             });
+          console.log(gameAreaController); */
+          multiplayer();
           setIsDisabled(false);
           setIsLoading(false);
           setButtonText('Join Multiplayer');
@@ -146,7 +155,11 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
           <h2>Main Menu</h2>
         </Box>
         <Container width='50%' style={{ marginLeft: '45%', marginTop: '25%' }}>
-          <JoinButton mainMenuPage={mainMenuPage} gameAreaController={gameAreaController} />
+          <JoinButton
+            multiplayerPage={multiplayerPage}
+            mainMenuPage={mainMenuPage}
+            gameAreaController={gameAreaController}
+          />
           <HomeScreenButton
             bg='green'
             color='white'
