@@ -11,7 +11,6 @@ import {
   ChessRankPosition,
   PlayerID,
   ChessCell,
-  API_CONNECTION_ERROR,
   ChessPiece,
   GameMove,
   ChessPosition,
@@ -24,7 +23,7 @@ import Game from './Game';
 import InvalidParametersError from '../../lib/InvalidParametersError';
 
 export const CHESS_BOARD_SIZE = 8;
-
+export const API_CONNECTION_ERROR = 'Cannot connect to StockfishOnline API';
 /**
  * A ChessGame is a Game that implements the rules of Chess.
  * @see https://en.wikipedia.org/wiki/Chess

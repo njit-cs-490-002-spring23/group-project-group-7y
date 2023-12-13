@@ -77,11 +77,10 @@ function JoinButton({ gameAreaController, mainMenuPage }: ChessGameProp): JSX.El
           setButtonText('Loading');
           await gameAreaController
             .joinGame()
-            .then(() => {
-              mainMenuPage();
-            })
+            .then(() => mainMenuPage())
             .catch(e => {
               mainMenuPage();
+              console.log(e);
               displayToast({
                 title: 'Join Failed',
                 description: `Error: ${(e as Error).message}`,
@@ -169,7 +168,6 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
  */
 export default function ChessAreaWrapper(): JSX.Element {
   const gameArea = useInteractable<GameAreaInteractable>('gameArea');
-  console.log(gameArea);
   const townController = useTownController();
   const closeModal = useCallback(() => {
     if (gameArea) {
