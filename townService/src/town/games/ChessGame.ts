@@ -765,7 +765,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   public isCheckmate(): boolean {
     // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
- 
+
     if (!this.isKingInCheck(currentPlayerColor)) {
       return false;
     }
@@ -924,7 +924,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const pawnCell = this.state.board[this._rankToRow(rank)][this._fileToColumn(file)];
     // Check if the cell contains a pawn and it is in the correct position for promotion
     if (
-      pawnCell && 
+      pawnCell &&
       pawnCell.piece.pieceType === 'P' &&
       ((pawnCell.piece.pieceColor === 'B' && rank === 8) ||
         (pawnCell.piece.pieceColor === 'W' && rank === 1))
