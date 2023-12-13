@@ -576,6 +576,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         piece: {
           pieceColor: _move.move.gamePiece.pieceColor,
           pieceType: _move.move.gamePiece.pieceType,
+          moved: true,
         },
       };
       this.state.board[_move.move.currentRank - 1][this._fileToIndex(_move.move.currentFile)] =
@@ -720,7 +721,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
               if (this.canEnPassant(this.state.moves[this.state.moves.length - 1], move.move)) {
                 // capture the pawn piece
                 this.state.board[destToRank - 1][destFileNumber] = undefined;
-                move.move.enPassant = true;
                 return true;
               }
               return false;
