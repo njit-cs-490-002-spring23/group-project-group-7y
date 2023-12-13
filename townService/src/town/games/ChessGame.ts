@@ -912,15 +912,34 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   /**
-   * Determines if a pawn promotion is possible at the current position.
-   * Pawn promotion occurs when a pawn reaches the farthest row from its starting position.
+   * Promotes a pawn to a new piece if it reaches the opposite end of the board.
    *
-   * @returns {boolean} - True if pawn promotion is possible, otherwise false.
-   * @throws {Error} - Throws an error if the game state is not valid.
+   * @param pawnPosition The current position of the pawn to be promoted.
+   * @param newPiece The new piece type to which the pawn is to be promoted.
+   * @returns {boolean} - Returns true if promotion was successful, false otherwise.
    */
-  public canPromotePawn(): boolean {
-    return false; // Default return value, to be implemented.
+  public promotePawn(pawnPosition: ChessPosition, newPiece: ChessPiece): boolean {
+    const { rank, file } = pawnPosition;
+    const pawnCell = this.state.board[this._rankToRow(rank)][this._fileToColumn(file)];
+    // Check if the cell contains a pawn and it is in the correct position for promotion
+    if (
+      pawnCell && 
+      pawnCell.piece.pieceType === 'P' &&
+      ((pawnCell.piece.pieceColor === 'B' && rank === 8) ||
+      (pawnCell.piece.pieceColor === 'W' && rank === 1))
+    ) {
+      // Promote the pawn
+      this.state.board[this._rankToRow(rank)][this._fileToColumn(file)] = {
+        piece: newPiece,
+      };
+      return true;
+    }
+
+    // Return false if promotion is not valid
+    return false;
   }
+
+
 
   /**
    * Updates the database to include the winner of the game state
