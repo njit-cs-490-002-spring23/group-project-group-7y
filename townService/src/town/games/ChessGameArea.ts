@@ -11,7 +11,7 @@ import GameArea from './GameArea';
 import ChessGame from './ChessGame';
 
 /**
- * A ChessGameArea is a GameArea that hosts a TicTacToeGame.
+ * A ChessGameArea is a GameArea that hosts a Chess Game.
  * @see ChessGame
  * @see GameArea
  */
