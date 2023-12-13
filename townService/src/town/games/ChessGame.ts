@@ -870,6 +870,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // If there are no legal moves, it's a stalemate
     return allPossibleMoves.length === 0;
   }
+
   /**
    * Determines if a player ('W' or 'B') can perform castling on 'K' or 'Q' side
    * Castling is a move that involves the king and either of the original rooks.
@@ -926,7 +927,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       pawnCell && 
       pawnCell.piece.pieceType === 'P' &&
       ((pawnCell.piece.pieceColor === 'B' && rank === 8) ||
-      (pawnCell.piece.pieceColor === 'W' && rank === 1))
+        (pawnCell.piece.pieceColor === 'W' && rank === 1))
     ) {
       // Promote the pawn
       this.state.board[this._rankToRow(rank)][this._fileToColumn(file)] = {
