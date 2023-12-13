@@ -82,7 +82,6 @@ function JoinButton(props: {
           setIsDisabled(true);
           setIsLoading(true);
           setButtonText('Loading');
-          /* console.log(gameAreaController);
           await gameAreaController
             .joinGame()
             .then(() => multiplayer())
@@ -94,7 +93,7 @@ function JoinButton(props: {
                 status: 'error',
               });
             });
-          console.log(gameAreaController); */
+          console.log(gameAreaController); 
           multiplayer();
           setIsDisabled(false);
           setIsLoading(false);

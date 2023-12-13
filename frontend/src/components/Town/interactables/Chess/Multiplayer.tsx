@@ -58,16 +58,16 @@ export default function Multiplayer(props: {
       gameAreaController.removeListener('drawOffered', boardChangedEventHandler);
     };
   }, [gameAreaController]);
-  // const townController = useTownController();
-  const opponent = 'Siva';
-  /* 
+  const townController = useTownController();
+  let opponent: string;
+  
   if (gameAreaController.status === 'IN_PROGRESS') {
     if (gameAreaController.white?.id === townController.ourPlayer.id) {
       opponent = gameAreaController.black?.userName;
     } else {
       opponent = gameAreaController.white?.userName;
     }
-  }*/
+  }
   // const diaplayToast = useToast();
   return (
     <>
