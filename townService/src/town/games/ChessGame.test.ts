@@ -303,7 +303,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given Invalid Pawn Move', () => {
-      it('should return an error if the player moves a pi1ece that does not belong to them', () => {
+      it('should return an error if the player moves a piece that does not belong to them', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -636,7 +636,7 @@ describe('ChessGame', () => {
           destinationRank: 3,
           destinationFile: 'a',
         };
-        expect(game.state.board[move3.currentRank - 1][2]?.piece.pieceType).toEqual('B');
+        expect(game.state.board[move3.currentRank - 2][2]?.piece.pieceType).toEqual('B');
         game.applyMove({
           gameID: game.id,
           playerID: player1.id,

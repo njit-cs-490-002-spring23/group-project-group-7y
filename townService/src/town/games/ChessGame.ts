@@ -4,20 +4,21 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { fetchMiddlewares } from 'tsoa';
 import axios from 'axios';
-import Player from '../../lib/Player';
 import {
-  GameMove,
   ChessGameState,
   ChessMove,
   ChessFilePosition,
   ChessRankPosition,
-  PieceWithPosition,
-  ChessPosition,
-  ChessCell,
-  ChessPiece,
   PlayerID,
+  ChessCell,
   API_CONNECTION_ERROR,
-} from '../../types/CoveyTownSocket.d';
+  ChessPiece,
+  GameMove,
+  ChessPosition,
+  PieceWithPosition,
+} from '../../types/CoveyTownSocket';
+import Player from '../../lib/Player';
+
 import { databaseUpdate } from './database/chessDatabase';
 import Game from './Game';
 import InvalidParametersError from '../../lib/InvalidParametersError';
