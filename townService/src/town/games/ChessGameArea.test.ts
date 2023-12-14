@@ -8,12 +8,7 @@ import {
   INVALID_COMMAND_MESSAGE,
 } from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
-import {
-  GameInstanceID,
-  ChessGameState,
-  ChessMove,
-  TownEmitter,
-} from '../../types/CoveyTownSocket';
+import { ChessGameState, ChessMove, TownEmitter } from '../../types/CoveyTownSocket';
 import ChessGameArea from './ChessGameArea';
 import * as ChessGameModule from './ChessGame';
 import Game from './Game';
@@ -25,6 +20,8 @@ class TestingGame extends Game<ChessGameState, ChessMove> {
       moves: [],
       status: 'WAITING_TO_START',
       halfMoves: 0,
+      capturedBlackPieces: [],
+      capturedWhitePieces: [],
     });
   }
 
