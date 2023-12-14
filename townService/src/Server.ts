@@ -11,7 +11,7 @@ import TownsStore from './lib/TownsStore';
 import { ClientToServerEvents, ServerToClientEvents } from './types/CoveyTownSocket';
 import { TownsController } from './town/TownsController';
 import { logError } from './Utils';
-import * as chessDatabase from './town/games/database/chessDatabase'; // Import the chess database module
+import * as chessDatabase from './town/games/database/chessDatabase';
 
 // Create the server instances
 const app = Express();
