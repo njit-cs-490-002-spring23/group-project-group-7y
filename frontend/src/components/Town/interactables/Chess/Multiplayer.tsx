@@ -51,6 +51,7 @@ export default function Multiplayer(props: {
   const gameAreaController = props.gameAreaController;
   // set up component state and listerners so board and cells re-render when updated
   const [gameBoard, setBoard] = React.useState(gameAreaController.board);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ourTurn, setOurTurn] = React.useState(gameAreaController.isOurTurn);
   useEffect(() => {
     function turnChangedEventHandler(turn: boolean) {

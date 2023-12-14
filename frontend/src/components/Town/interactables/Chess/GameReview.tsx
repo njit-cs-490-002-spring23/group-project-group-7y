@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Box, List, ListItem, Button, Text } from '@chakra-ui/react';
 import GameReviewDetail from './GameReviewDetail';
 
