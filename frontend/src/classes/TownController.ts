@@ -619,7 +619,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         initialData.interactables.forEach(eachInteractable => {
           if (isChessArea(eachInteractable)) {
             const gameArea = new ChessAreaController(eachInteractable.id, eachInteractable, this);
-            console.log(gameArea);
             this._gameAreas.push(gameArea);
           } else if (isConversationArea(eachInteractable)) {
             this._conversationAreasInternal.push(

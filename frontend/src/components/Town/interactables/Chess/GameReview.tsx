@@ -12,7 +12,6 @@ export type GameReviewProps = {
 export default function GameReview(props: GameReviewProps): JSX.Element {
   const [currentView, setCurrentView] = useState('gameList');
   const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
-  console.log(selectedGame);
   const selectGame = (gameId: string) => {
     const foundGame = props.games.find(game => game.gameId === gameId);
     setSelectedGame(foundGame || null);
