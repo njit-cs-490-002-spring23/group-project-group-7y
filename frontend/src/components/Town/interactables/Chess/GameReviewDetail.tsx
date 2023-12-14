@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Container, Divider, chakra } from '@chakra-ui/react';
-import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
+import { Box, Button, Container, Divider, chakra, Text } from '@chakra-ui/react';
 import {
   ChessCell,
   ChessFilePosition,
   ChessPiece,
   ChessRankPosition,
+  GameData,
 } from '../../../../types/CoveyTownSocket';
 
 const StyledChessRow = chakra(Box, {
@@ -44,12 +44,7 @@ const StyledChessBoard = chakra(Container, {
 });
 
 export type GameReviewDetailProps = {
-  game: {
-    date: string;
-    opponent: string;
-    result: string;
-    moves: string[]; // Array of moves in standard notation
-  };
+  game: GameData;
   nextMove: () => void;
   prevMove: () => void;
   mainMenu: () => void;
@@ -108,48 +103,92 @@ const initializeBoard = () => {
   });
   return board;
 };
-const applyMoveToBoard = (board: ChessCell[][], move: string) => {
-  const fileToIndex = (file: string) => file.charCodeAt(0) - 'a'.charCodeAt(0);
-  const rankToIndex = (rank: string) => 8 - parseInt(rank, 10);
 
-  const [source, destination] = move.split(',');
+const pieceTypeFromFENChar: { [key: string]: ChessPiece['pieceType'] } = {
+  K: 'K',
+  Q: 'Q',
+  R: 'R',
+  B: 'B',
+  N: 'N',
+  P: 'P',
+  k: 'K',
+  q: 'Q',
+  r: 'R',
+  b: 'B',
+  n: 'N',
+  p: 'P',
+};
 
-  const sourceFileIndex = fileToIndex(source[0]);
-  const sourceRankIndex = rankToIndex(source[1]);
-  const destinationFileIndex = fileToIndex(destination[0]);
-  const destinationRankIndex = rankToIndex(destination[1]);
+const parseFEN = (fen: string) => {
+  const [position, turn, castling, enPassant, halfMoveClock, fullMoveNumber] = fen.split(' ');
+  const rows = position.split('/');
+  const board: ChessCell[][] = rows.map(row => {
+    const rowPieces: ChessCell[] = [];
+    for (const char of row) {
+      if (isNaN(parseInt(char))) {
+        const pieceColor = char === char.toUpperCase() ? 'W' : 'B';
+        const pieceType = pieceTypeFromFENChar[char];
+        rowPieces.push({ piece: { pieceType, pieceColor, moved: false } });
+      } else {
+        rowPieces.push(...Array(parseInt(char)).fill(undefined));
+      }
+    }
+    return rowPieces;
+  });
 
-  const movingPiece = board[sourceRankIndex][sourceFileIndex]?.piece;
+  return {
+    board,
+    turn,
+    castling,
+    enPassant,
+    halfMoveClock: parseInt(halfMoveClock),
+    fullMoveNumber: parseInt(fullMoveNumber),
+  };
+};
 
-  if (movingPiece) {
-    // Move the piece to the new position
-    board[destinationRankIndex][destinationFileIndex] = { piece: movingPiece };
-    // Remove the piece from the start position
-    board[sourceRankIndex][sourceFileIndex] = undefined;
-  } else {
-    console.error('No piece found at the source square', source);
-  }
+const applyFENToBoard = (fen: string) => {
+  const { board, turn, castling, enPassant, halfMoveClock, fullMoveNumber } = parseFEN(fen);
 
-  return board;
+  return { board, turn, castling, enPassant, halfMoveClock, fullMoveNumber };
 };
 
 export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Element {
   const { game, mainMenu, backToReviewList } = props;
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const [board, setBoard] = useState(initializeBoard());
+
+  // Parse the moves once and store in a state
+  const [parsedMoves, setParsedMoves] = useState<string[]>([]);
 
   useEffect(() => {
-    // Reset the board to the initial state
-    const newBoard = initializeBoard();
-    // Apply each move up to currentMoveIndex
-    for (let i = 0; i <= currentMoveIndex; i++) {
-      applyMoveToBoard(newBoard, game.moves[i]);
+    // Check if game.moves is a valid JSON string
+    if (game.moves && typeof game.moves === 'string') {
+      try {
+        const movesArray = JSON.parse(game.moves);
+        setParsedMoves(movesArray);
+      } catch (error) {
+        console.error('Error parsing game moves:', error);
+      }
     }
-    setBoard(newBoard);
-  }, [currentMoveIndex, game.moves]);
+  }, [game.moves]);
+
+  const [gameState, setGameState] = useState({
+    board: initializeBoard(),
+    turn: 'w',
+    castling: 'KQkq',
+    enPassant: '-',
+    halfMoveClock: 0,
+    fullMoveNumber: 1,
+  });
+
+  useEffect(() => {
+    if (parsedMoves[currentMoveIndex]) {
+      const newState = applyFENToBoard(parsedMoves[currentMoveIndex]);
+      setGameState(newState);
+    }
+  }, [currentMoveIndex, parsedMoves]);
 
   const nextMove = () => {
-    if (currentMoveIndex < game.moves.length - 1) {
+    if (currentMoveIndex < parsedMoves.length - 1) {
       setCurrentMoveIndex(currentMoveIndex + 1);
     }
   };
@@ -169,14 +208,17 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
       p={4}
       color='black'
       minHeight='600px'>
-      <Box as='header' textAlign='center' mb={4} bg='orange'>
-        <h2>Review Game</h2>
-        <p>{`Date: ${game.date} | Opponent: ${game.opponent} | Result: ${game.result}`}</p>
+      <Box w='100%' bg='orange' p={4} borderBottom='1px solid black'>
+        <Text fontSize='2xl' fontWeight='bold' textAlign='center' mb={2}>
+          Review Game
+        </Text>
+        <Text fontSize='md'>Date: {game.date}</Text>
+        <Text fontSize='md'>Player1: {game.playerOne}</Text>
+        <Text fontSize='md'>Player2: {game.playerTwo}</Text>
       </Box>
-
       <Box bg='white' p={4} mb={4}>
         <StyledChessBoard justifyContent='center'>
-          {board.map((row: any[], rowIndex: any) => (
+          {gameState.board.map((row: any[], rowIndex: any) => (
             <StyledChessRow key={rowIndex} id={`${rowIndex}`}>
               {row.map((cell, colIndex) => {
                 const color = cell?.piece.pieceColor;
@@ -199,24 +241,25 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
         </StyledChessBoard>
         <p>Game Board</p>
       </Box>
+
+      <Box display='flex' mt={4} justifyContent='space-between' paddingBottom={'10px'}>
+        <Button onClick={prevMove}>Previous Move</Button>
+        <Button onClick={nextMove}>Next Move</Button>
+      </Box>
+
       <Box bg='white' p={4}>
         <p>Move History:</p>
         <ul>
           {currentMoveIndex === 0 ? (
             <li>Previous: None</li>
           ) : (
-            <li>Previous: {game.moves[currentMoveIndex - 1]}</li>
+            <li>Previous: {parsedMoves[currentMoveIndex - 1]}</li>
           )}
-          <li style={{ fontWeight: 'bold' }}>Current: {game.moves[currentMoveIndex]}</li>
-          {currentMoveIndex < game.moves.length - 1 && (
-            <li>Next: {game.moves[currentMoveIndex + 1]}</li>
+          <li style={{ fontWeight: 'bold' }}>Current: {parsedMoves[currentMoveIndex]}</li>
+          {currentMoveIndex < parsedMoves.length - 1 && (
+            <li>Next: {parsedMoves[currentMoveIndex + 1]}</li>
           )}
         </ul>
-      </Box>
-
-      <Box display='flex' mt={4} justifyContent='space-between'>
-        <Button onClick={prevMove}>Previous Move</Button>
-        <Button onClick={nextMove}>Next Move</Button>
       </Box>
 
       <Divider my={4} />

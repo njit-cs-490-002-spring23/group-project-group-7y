@@ -19,12 +19,13 @@ import {
 import Leaderboard, { LeaderBoardProp } from './Leaderboard';
 import Multiplayer from './Multiplayer';
 import useTownController from '../../../../hooks/useTownController';
-import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
+import { GameData, GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
 import { useInteractable, useInteractableAreaController } from '../../../../classes/TownController';
 import GameAreaInteractable from '../GameArea';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import GameReview from './GameReview';
+import { fetchAllGames } from '../../../../services/gameService';
 
 export type ChessGameProp = {
   gameAreaController: ChessAreaController;
@@ -47,35 +48,6 @@ const HomeScreenButton = chakra(Button, {
     margin: '5px',
   },
 });
-type GameHistories = {
-  [key: string]: {
-    date: string;
-    opponent: string;
-    result: string;
-    moves: string[];
-  };
-};
-
-const FAKE_GAMES = [
-  {
-    date: '2023-04-01',
-    opponent: 'PlayerOne',
-    result: 'Win',
-    id: 'game1',
-  },
-  {
-    date: '2023-04-02',
-    opponent: 'PlayerTwo',
-    result: 'Loss',
-    id: 'game2',
-  },
-  {
-    date: '2023-04-03',
-    opponent: 'PlayerThree',
-    result: 'Tie',
-    id: 'game3',
-  },
-];
 /**
  * Creates and returns the Multiplayer button
  * If the game is in status WAITING_TO_START or OVER, a button to join the game is displayed, with the text 'Join New Game'
@@ -139,6 +111,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const gameAreaController = useInteractableAreaController<ChessAreaController>(interactableID);
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
   const [currentPage, setcurrentPage] = useState('mainMenu');
+  const [gameHistories, setGameHistories] = useState<GameData[]>([]);
   const townController = useTownController();
 
   const mainMenuPage = () => {
@@ -153,10 +126,11 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const gameReviewPage = () => {
     setcurrentPage('gamereview');
   };
+
   useEffect(() => {
-    // Fetch chess game results (for now, using dummy data)
-    const results = generateDummyChessResults();
-    setChessResults(results);
+    fetchAllGames().then((fetchedGames: React.SetStateAction<GameData[]>) => {
+      setGameHistories(fetchedGames);
+    });
   }, []);
 
   //diaplay proper page
@@ -175,7 +149,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   } else if (currentPage === 'gamereview') {
     return (
       <>
-        <GameReview mainMenu={mainMenuPage} games={FAKE_GAMES} />
+        <GameReview mainMenu={mainMenuPage} games={gameHistories} />
       </>
     );
   } else {
