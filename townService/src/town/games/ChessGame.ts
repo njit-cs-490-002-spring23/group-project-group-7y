@@ -1602,22 +1602,18 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param newMove The new move to be added to the game's history.
    */
   async updateGameHistory(gameId: string, newMove: string): Promise<void> {
-    try {
-      // Fetch the current game history from the database
-      const gameData = await databaseUpdate.getGameHistory(gameId);
-      if (!gameData) {
-        throw new Error('Game not found in database');
-      }
-
-      // Parse the existing moves and add the new move
-      const moves = gameData.moves;
-      moves.push(newMove);
-      const updatedMovesJSON = JSON.stringify(moves);
-
-      // Update the game history in the database
-      await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON);
-    } catch (error) {
-      throw error;
+    // Fetch the current game history from the database
+    const gameData = await databaseUpdate.getGameHistory(gameId);
+    if (!gameData) {
+      throw new Error('Game not found in database');
     }
+
+    // Parse the existing moves and add the new move
+    const moves = gameData.moves;
+    moves.push(newMove);
+    const updatedMovesJSON = JSON.stringify(moves);
+
+    // Update the game history in the database
+    await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON);
   }
 }
