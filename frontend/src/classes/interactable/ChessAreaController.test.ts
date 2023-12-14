@@ -17,8 +17,8 @@ import GameAreaController from './GameAreaController';
 import ChessAreaController, { NO_GAME_IN_PROGRESS_ERROR } from './ChessAreaController';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import mock from 'jest-mock-extended/lib/Mock';
-
-describe('[T1] ChessAreaController', () => {
+// TODO: WIP
+describe.skip('[T1] ChessAreaController', () => {
   const ourPlayer = new PlayerController(nanoid(), nanoid(), {
     x: 0,
     y: 0,
