@@ -1617,9 +1617,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       // Update the game history in the database
       await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON);
     } catch (error) {
-      console.error('Failed to update game history:', error);
       throw error;
     }
   }
-
 }

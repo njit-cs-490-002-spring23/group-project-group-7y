@@ -71,7 +71,6 @@ app.use(
 app.get('/api/games', async (_req, res) => {
   try {
     const games = await chessDatabase.databaseUpdate.getAllGames();
-    console.log(games);
     res.json(games);
   } catch (error) {
     logError(error);
