@@ -1609,7 +1609,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     }
 
     // Parse the existing moves and add the new move
-    const moves = gameData.moves;
+    const { moves } = gameData;
     moves.push(newMove);
     const updatedMovesJSON = JSON.stringify(moves);
 
