@@ -27,6 +27,7 @@ import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
 import ChessAreaController from './interactable/ChessAreaController';
 import GameArea from '../components/Town/interactables/GameArea';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import GameAreaController, { GameEventTypes } from './interactable/GameAreaController';
 import { nanoid } from 'nanoid';
 

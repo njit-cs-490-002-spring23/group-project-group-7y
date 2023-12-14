@@ -79,7 +79,7 @@ function JoinButton(props: {
         variant='outline'
         isLoading={isLoading}
         disabled={isDisabled}
-        onClick={async (event: { currentTarget: { remove: () => void } }) => {
+        onClick={async (_event: { currentTarget: { remove: () => void } }) => {
           setIsDisabled(true);
           setIsLoading(true);
           setButtonText('Loading');
@@ -94,7 +94,6 @@ function JoinButton(props: {
                 status: 'error',
               });
             });
-          console.log(gameAreaController); 
           multiplayer();
           setIsDisabled(false);
           setIsLoading(false);

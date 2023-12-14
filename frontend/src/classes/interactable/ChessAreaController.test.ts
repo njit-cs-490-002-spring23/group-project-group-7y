@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import assert from 'assert';
 import { nanoid } from 'nanoid';
 import {
@@ -12,6 +13,7 @@ import {
 import PlayerController from '../PlayerController';
 import TownController from '../TownController';
 import GameAreaController from './GameAreaController';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import ChessAreaController, { NO_GAME_IN_PROGRESS_ERROR } from './ChessAreaController';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import mock from 'jest-mock-extended/lib/Mock';

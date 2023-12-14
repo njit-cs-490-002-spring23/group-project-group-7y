@@ -8,6 +8,7 @@ import {
   GameData,
 } from '../../../../types/CoveyTownSocket';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessRow = chakra(Box, {
   baseStyle: {
     display: 'flex',
@@ -20,6 +21,7 @@ const StyledChessRow = chakra(Box, {
 /**
  * A component that will render a single cell in the Chess board, styled
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessSquare = chakra(Box, {
   baseStyle: {
     justifyContent: 'center',
@@ -32,6 +34,7 @@ const StyledChessSquare = chakra(Box, {
 /**
  * A component that will render the Chess board, styled
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessBoard = chakra(Container, {
   baseStyle: {
     bg: 'transparent',
@@ -218,7 +221,7 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
       </Box>
       <Box bg='white' p={4} mb={4}>
         <StyledChessBoard justifyContent='center'>
-          {gameState.board.map((row: any[], rowIndex: any) => (
+          {gameState.board.map((row, rowIndex) => (
             <StyledChessRow key={rowIndex} id={`${rowIndex}`}>
               {row.map((cell, colIndex) => {
                 const color = cell?.piece.pieceColor;

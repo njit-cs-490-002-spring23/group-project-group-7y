@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import React, { useEffect } from 'react';
 import { ChessCell } from '../../../../types/CoveyTownSocket';
-import { Box, Button, Container, chakra, Stack, Image, background } from '@chakra-ui/react';
+import { Box, Container, chakra } from '@chakra-ui/react';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import useTownController from '../../../../hooks/useTownController';
 
@@ -110,7 +110,6 @@ export default function Multiplayer(props: {
             </StyledChessRow>
           ))}
         </StyledChessBoard>
-
       </Container>
     </>
   );
