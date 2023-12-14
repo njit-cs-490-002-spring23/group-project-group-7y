@@ -41,17 +41,17 @@ export default function GameReview(props: GameReviewProps): JSX.Element {
             {props.games.map(game => (
               <ListItem
                 key={game.gameId}
-                p={1} // Reduced padding
+                p={1}
                 bg='green'
                 color='black'
-                mb={1} // Reduced margin
+                mb={1}
                 _hover={{ bg: 'green.600' }}
                 cursor='pointer'>
                 <Button
                   bg='green'
                   w='100%'
                   justifyContent='flex-start'
-                  fontSize='sm' // Smaller font size
+                  fontSize='sm'
                   onClick={() => selectGame(game.gameId)}>
                   <Box w='100%' display='flex' flexDirection='column'>
                     <Text>Date: {game.date}</Text>
