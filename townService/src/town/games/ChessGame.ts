@@ -35,6 +35,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       moves: [],
       status: 'WAITING_TO_START',
       halfMoves: 0,
+      capturedBlackPieces: [],
+      capturedWhitePieces: [],
     });
     this.initializeChessBoard();
   }
@@ -612,6 +614,23 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         if (this.state.board[currRank][currFile]?.piece.pieceColor === playerColor) {
           return 'Your piece is in the way';
         }
+        if (playerColor === 'W') {
+          const chessCaptured: ChessPiece = {
+            pieceColor: 'B',
+            pieceType: this.state.board[destRank][destFile]?.piece.pieceType,
+            moved: true,
+          };
+          const updateChessCapture = [...this.state.capturedBlackPieces, chessCaptured];
+          this.state.capturedBlackPieces = updateChessCapture;
+        } else {
+          const chessCaptured: ChessPiece = {
+            pieceColor: 'W',
+            pieceType: this.state.board[destRank][destFile]?.piece.pieceType,
+            moved: true,
+          };
+          const updateChessCapture = [...this.state.capturedWhitePieces, chessCaptured];
+          this.state.capturedWhitePieces = updateChessCapture;
+        }
         return 'Capture Possible';
       }
     }
@@ -674,8 +693,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       case 'P':
         // Checks to see if pawn's initial move is by 2
         if (
-          (currInRank === 1 && destToRank === currInRank + 2 && playerColor === 'W') ||
-          (currInRank === 6 && destToRank === currInRank - 2 && playerColor === 'B')
+          (currInRank === 1 && destToRank === currInRank + 2 && playerColor === 'B') ||
+          (currInRank === 6 && destToRank === currInRank - 2 && playerColor === 'W')
         ) {
           // if file changes the move is invalid
           if (destFileNumber !== currFileNumber) {
@@ -700,8 +719,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         }
         // regular pawn movement by 1
         if (
-          (destToRank === currInRank + 1 && playerColor === 'W') ||
-          (destToRank === currInRank - 1 && playerColor === 'B')
+          (destToRank === currInRank + 1 && playerColor === 'B') ||
+          (destToRank === currInRank - 1 && playerColor === 'W')
         ) {
           result = this._checkChessCells(
             currInRank,
@@ -720,6 +739,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
               // call canEnPassant with the lastMove from the moves ReadOnlyArray and the current move
               if (this.canEnPassant(this.state.moves[this.state.moves.length - 1], move.move)) {
                 // capture the pawn piece
+                if (playerColor === 'W') {
+                  this.state.board[destToRank + 1][destFileNumber] = undefined;
+                } else {
+                  this.state.board[destToRank - 1][destFileNumber] = undefined;
+                }
                 this.state.board[destToRank - 1][destFileNumber] = undefined;
                 return true;
               }
@@ -1503,10 +1527,10 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // Checks the previous moves and determines whether it was a pawn with an initial movement of 2
     if (
       lastMove.gamePiece.pieceType === 'P' &&
-      ((lastMove.gamePiece.pieceColor === 'B' &&
+      ((lastMove.gamePiece.pieceColor === 'W' &&
         lastMove.currentRank - 1 === 6 &&
         lastMove.destinationRank - 1 === 4) ||
-        (lastMove.gamePiece.pieceColor === 'W' &&
+        (lastMove.gamePiece.pieceColor === 'B' &&
           lastMove.currentRank - 1 === 1 &&
           lastMove.destinationRank - 1 === 3)) &&
       (lastMovesFileNumber === currentMovesFileNumber + 1 ||
