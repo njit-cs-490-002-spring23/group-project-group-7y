@@ -29,7 +29,6 @@ export default class ChessGameArea extends GameArea<ChessGame> {
     return this._type;
   }
 
-
   private _stateUpdated(updatedState: GameInstance<ChessGameState>) {
     if (updatedState.state.status === 'OVER') {
       // If we haven't yet recorded the outcome, do so now.
@@ -37,8 +36,10 @@ export default class ChessGameArea extends GameArea<ChessGame> {
       if (gameID && !this._history.find(eachResult => eachResult.gameID === gameID)) {
         const { white, black } = updatedState.state;
         if (white && black) {
-          const xName = this._occupants.find(eachPlayer => eachPlayer.id === white)?.userName || white;
-          const oName = this._occupants.find(eachPlayer => eachPlayer.id === black)?.userName || black;
+          const xName =
+            this._occupants.find(eachPlayer => eachPlayer.id === white)?.userName || white;
+          const oName =
+            this._occupants.find(eachPlayer => eachPlayer.id === black)?.userName || black;
           this._history.push({
             gameID,
             scores: {
