@@ -11,6 +11,7 @@ import TownsStore from './lib/TownsStore';
 import { ClientToServerEvents, ServerToClientEvents } from './types/CoveyTownSocket';
 import { TownsController } from './town/TownsController';
 import { logError } from './Utils';
+import * as chessDatabase from './town/games/database/chessDatabase'; // Import the chess database module
 
 // Create the server instances
 const app = Express();
@@ -65,6 +66,18 @@ app.use(
     return next();
   },
 );
+
+// Endpoint to get all game histories
+app.get('/api/games', async (_req, res) => {
+  try {
+    const games = await chessDatabase.databaseUpdate.getAllGames();
+    console.log(games);
+    res.json(games);
+  } catch (error) {
+    logError(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 // Start the configured server, defaulting to port 8081 if $PORT is not set
 server.listen(process.env.PORT || 8081, () => {
