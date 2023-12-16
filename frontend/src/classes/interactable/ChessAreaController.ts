@@ -20,16 +20,16 @@ export type ChessEvents = GameEventTypes & {
 };
 
 /**
- * This class is responsible for managing the state of the Tic Tac Toe game, and for sending commands to the server
+ * This class is responsible for managing the state of the Chess, and for sending commands to the server
  */
 export default class ChessAreaController extends GameAreaController<ChessGameState, ChessEvents> {
   /**
    * Returns the current state of the board.
    *
-   * The board is a 3x3 array of ChessCell, which is either 'X', 'O', or undefined.
+   * The board is a 8x8 array of ChessCell, which is The piece type with color, or undefined.
    *
    * The 2-dimensional array is indexed by row and then column, so board[0][0] is the top-left cell,
-   * and board[2][2] is the bottom-right cell
+   * and board[7][7] is the bottom-right cell
    */
   get board(): ChessCell[][] {
     const board: ChessCell[][] = Array(8)

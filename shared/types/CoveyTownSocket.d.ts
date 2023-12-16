@@ -202,6 +202,23 @@ export interface PieceWithPosition {
   position: Position;
 }
 
+export type GameData = {
+  gameId: string;
+  date: string;
+  playerOne: string;
+  playerTwo: string;
+  result: string;
+  moves: string[];
+  moveNames: string[];
+};
+
+export type LeaderBoardRow = {
+  username: string;
+  wins: number;
+  ties: number;
+  losses: number;
+};
+
 /**
  * Type for the result of a game
  */

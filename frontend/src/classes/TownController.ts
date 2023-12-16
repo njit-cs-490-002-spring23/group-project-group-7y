@@ -27,6 +27,7 @@ import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
 import ChessAreaController from './interactable/ChessAreaController';
 import GameArea from '../components/Town/interactables/GameArea';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import GameAreaController, { GameEventTypes } from './interactable/GameAreaController';
 import { nanoid } from 'nanoid';
 
@@ -618,7 +619,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         initialData.interactables.forEach(eachInteractable => {
           if (isChessArea(eachInteractable)) {
             const gameArea = new ChessAreaController(eachInteractable.id, eachInteractable, this);
-            console.log(gameArea);
             this._gameAreas.push(gameArea);
           } else if (isConversationArea(eachInteractable)) {
             this._conversationAreasInternal.push(

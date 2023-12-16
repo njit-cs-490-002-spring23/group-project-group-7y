@@ -19,11 +19,13 @@ import {
 import Leaderboard, { LeaderBoardProp } from './Leaderboard';
 import Multiplayer from './Multiplayer';
 import useTownController from '../../../../hooks/useTownController';
-import { GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
+import { GameData, GameResult, InteractableID } from '../../../../types/CoveyTownSocket';
 import { generateDummyChessResults } from './DummyResults';
 import { useInteractable, useInteractableAreaController } from '../../../../classes/TownController';
 import GameAreaInteractable from '../GameArea';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
+import GameReview from './GameReview';
+import { fetchAllGames } from '../../../../services/gameService';
 
 export type ChessGameProp = {
   gameAreaController: ChessAreaController;
@@ -46,7 +48,6 @@ const HomeScreenButton = chakra(Button, {
     margin: '5px',
   },
 });
-
 /**
  * Creates and returns the Multiplayer button
  * If the game is in status WAITING_TO_START or OVER, a button to join the game is displayed, with the text 'Join New Game'
@@ -78,11 +79,10 @@ function JoinButton(props: {
         variant='outline'
         isLoading={isLoading}
         disabled={isDisabled}
-        onClick={async (event: { currentTarget: { remove: () => void } }) => {
+        onClick={async (_event: { currentTarget: { remove: () => void } }) => {
           setIsDisabled(true);
           setIsLoading(true);
           setButtonText('Loading');
-          /* console.log(gameAreaController);
           await gameAreaController
             .joinGame()
             .then(() => multiplayer())
@@ -94,7 +94,6 @@ function JoinButton(props: {
                 status: 'error',
               });
             });
-          console.log(gameAreaController); */
           multiplayer();
           setIsDisabled(false);
           setIsLoading(false);
@@ -111,6 +110,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const gameAreaController = useInteractableAreaController<ChessAreaController>(interactableID);
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
   const [currentPage, setcurrentPage] = useState('mainMenu');
+  const [gameHistories, setGameHistories] = useState<GameData[]>([]);
   const townController = useTownController();
 
   const mainMenuPage = () => {
@@ -122,10 +122,14 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const multiplayerPage = () => {
     setcurrentPage('multiplayer');
   };
+  const gameReviewPage = () => {
+    setcurrentPage('gamereview');
+  };
+
   useEffect(() => {
-    // Fetch chess game results (for now, using dummy data)
-    const results = generateDummyChessResults();
-    setChessResults(results);
+    fetchAllGames().then((fetchedGames: React.SetStateAction<GameData[]>) => {
+      setGameHistories(fetchedGames);
+    });
   }, []);
 
   //diaplay proper page
@@ -139,6 +143,12 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
     return (
       <>
         <Multiplayer gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
+      </>
+    );
+  } else if (currentPage === 'gamereview') {
+    return (
+      <>
+        <GameReview mainMenu={mainMenuPage} games={gameHistories} />
       </>
     );
   } else {
@@ -165,7 +175,14 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
             color='white'
             onClick={() => leaderboardPage()}
             variant='outline'>
-            Leaderbaord
+            Leaderboard
+          </HomeScreenButton>
+          <HomeScreenButton
+            bg='green'
+            color='white'
+            onClick={() => gameReviewPage()}
+            variant='outline'>
+            Game Review
           </HomeScreenButton>
         </Container>
       </Box>

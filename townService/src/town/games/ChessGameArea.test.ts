@@ -9,6 +9,8 @@ import {
 } from '../../lib/InvalidParametersError';
 import Player from '../../lib/Player';
 import {
+  // TODO: use this later?
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   GameInstanceID,
   ChessGameState,
   ChessMove,
