@@ -101,7 +101,7 @@ export const databaseUpdate = {
     }),
 
   // Update the updateGameHistory method
-  async updateGameHistory(gameId: string, newMove: string): Promise<void> {
+  async updateGameHistory(gameId: string, newMove: string, newMoveName: string): Promise<void> {
     try {
       const gameData = await this.getGameHistory(gameId);
       if (!gameData) {
@@ -109,12 +109,24 @@ export const databaseUpdate = {
       }
 
       const moves = gameData.moves || [];
+      const moveNames = gameData.moveNames || [];
       moves.push(newMove);
+      moveNames.push(newMoveName);
       const updatedMovesJSON = JSON.stringify(moves);
+      const moveNamesJSON = JSON.stringify(moveNames);
 
       db.run(
         'UPDATE gameHistories SET moves = ? WHERE gameId = ?',
         [updatedMovesJSON, gameId],
+        err => {
+          if (err) {
+            throw err;
+          }
+        },
+      );
+      db.run(
+        'UPDATE gameHistories SET moveNames = ? WHERE gameId = ?',
+        [moveNamesJSON, gameId],
         err => {
           if (err) {
             throw err;

@@ -1601,7 +1601,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @param gameId The unique identifier for the game.
    * @param newMove The new move to be added to the game's history.
    */
-  async updateGameHistory(gameId: string, newMove: string): Promise<void> {
+  async updateGameHistory(gameId: string, newMove: string, newMoveName: string): Promise<void> {
     // Fetch the current game history from the database
     const gameData = await databaseUpdate.getGameHistory(gameId);
     if (!gameData) {
@@ -1612,8 +1612,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const { moves } = gameData;
     moves.push(newMove);
     const updatedMovesJSON = JSON.stringify(moves);
+    const { moveNames } = gameData;
+    moveNames.push(newMoveName);
+    const updatedMoveNamesJSON = JSON.stringify(moveNames);
 
     // Update the game history in the database
-    await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON);
+    await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON, updatedMoveNamesJSON);
   }
 }
