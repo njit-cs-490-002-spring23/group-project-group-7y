@@ -26,11 +26,13 @@ db.exec(
     playerOne TEXT,
     playerTwo TEXT,
     result TEXT,
-    moves TEXT
+    moves TEXT,
+    moveNames TEXT
   )`,
 );
+
 db.exec(
-  `INSERT OR REPLACE INTO gameHistories (gameId, date, playerOne, playerTwo, result, moves) VALUES
+  `INSERT OR REPLACE INTO gameHistories (gameId, date, playerOne, playerTwo, result, moves, moveNames) VALUES
     ('game1', '2023-04-01', 'TestPerson','AnotherPerson', 'TestPerson Won', '["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
       "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR",
       "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR",
@@ -42,20 +44,19 @@ db.exec(
       "rnbqk1nr/ppp2ppp/4p3/b2p4/3P1B2/2P1P3/PP3PPP/RN1QKBNR",
       "rnbqk1nr/ppp2ppp/4p3/b2p4/3P1B2/2PBP3/PP3PPP/RN1QK1NR",
       "r1bqk1nr/ppp2ppp/2n1p3/b2p4/3P1B2/2PBP3/PP3PPP/RN1QK1NR",
-      "r1bqk1nr/ppp2ppp/2n1p3/b2p4/3P1B2/2PBPN2/PP3PPP/RN1QK2R"]')`,
+      "r1bqk1nr/ppp2ppp/2n1p3/b2p4/3P1B2/2PBPN2/PP3PPP/RN1QK2R"]',
+      '["Inital","d4","d5","Bf4","e6","e3","Bb4+","c3","Ba5","Bd3","Nc6","Nf3"]')`,
 );
+
 db.exec(
-  `INSERT OR REPLACE INTO gameHistories (gameId, date, playerOne, playerTwo, result, moves) VALUES
-    ('game2', '2023-04-01', 'AnotherPerson', 'TestPerson', 'TestPerson Lost', '["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
-    "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR",
-    "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR",
-    "rnbqkb1r/pppppppp/5n2/8/3P4/2N5/PPP1PPPP/R1BQKBNR",
-    "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/2N5/PPP1PPPP/R1BQKBNR",
-    "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/2N1P3/PPP2PPP/R1BQKBNR",
-    "rnbqkb1r/pp2pppp/5n2/2pp4/3P4/2N1P3/PPP2PPP/R1BQKBNR",
-    "rnbqkb1r/pp2pppp/5n2/1Bpp4/3P4/2N1P3/PPP2PPP/R1BQK1NR",
-    "rn1qkb1r/pp1bpppp/5n2/1Bpp4/3P4/2N1P3/PPP2PPP/R1BQK1NR"]')`,
+  `INSERT OR REPLACE INTO gameHistories (gameId, date, playerOne, playerTwo, result, moves, moveNames) VALUES
+    ('game3', '2023-04-04', 'ThirdPerson', 'TestPerson', 'ThirdPerson Won', '["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+    "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR",
+    "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR",
+    "rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR",
+    "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR"]','["Inital","e4","d5","exd5","Qxd5"]')`,
 );
+
 export const databaseUpdate = {
   getLeaderBoardRow: (username: string) =>
     db.get('SELECT * FROM leaderboard WHERE username = ?', username),

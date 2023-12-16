@@ -209,6 +209,7 @@ export type GameData = {
   playerTwo: string;
   result: string;
   moves: string[];
+  moveNames: string[];
 };
 
 export type LeaderBoardRow = {

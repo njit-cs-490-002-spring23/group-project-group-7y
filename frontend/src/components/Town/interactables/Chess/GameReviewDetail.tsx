@@ -158,12 +158,10 @@ const applyFENToBoard = (fen: string) => {
 export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Element {
   const { game, mainMenu, backToReviewList } = props;
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-
-  // Parse the moves once and store in a state
   const [parsedMoves, setParsedMoves] = useState<string[]>([]);
+  const [parsedMoveNames, setParsedMoveNames] = useState<string[]>([]);
 
   useEffect(() => {
-    // Check if game.moves is a valid JSON string
     if (game.moves && typeof game.moves === 'string') {
       try {
         const movesArray = JSON.parse(game.moves);
@@ -172,7 +170,15 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
         console.error('Error parsing game moves:', error);
       }
     }
-  }, [game.moves]);
+    if (game.moveNames && typeof game.moveNames === 'string') {
+      try {
+        const moveNamesArray = JSON.parse(game.moveNames);
+        setParsedMoveNames(moveNamesArray);
+      } catch (error) {
+        console.error('Error parsing game move names:', error);
+      }
+    }
+  }, [game.moves, game.moveNames]);
 
   const [gameState, setGameState] = useState({
     board: initializeBoard(),
@@ -256,11 +262,11 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
           {currentMoveIndex === 0 ? (
             <li>Previous: None</li>
           ) : (
-            <li>Previous: {parsedMoves[currentMoveIndex - 1]}</li>
+            <li>Previous: {parsedMoveNames[currentMoveIndex - 1]}</li>
           )}
-          <li style={{ fontWeight: 'bold' }}>Current: {parsedMoves[currentMoveIndex]}</li>
-          {currentMoveIndex < parsedMoves.length - 1 && (
-            <li>Next: {parsedMoves[currentMoveIndex + 1]}</li>
+          <li style={{ fontWeight: 'bold' }}>Current: {parsedMoveNames[currentMoveIndex]}</li>
+          {currentMoveIndex < parsedMoveNames.length - 1 && (
+            <li>Next: {parsedMoveNames[currentMoveIndex + 1]}</li>
           )}
         </ul>
       </Box>
