@@ -34,56 +34,29 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * and board[7][7] is the bottom-right cell
    */
   get board(): ChessCell[][] {
-    const board: ChessCell[][] = Array(8)
-      .fill(undefined)
-      .map(() => Array(8).fill(undefined));
-    const fileToIndex = (file: ChessFilePosition): number => file.charCodeAt(0) - 'a'.charCodeAt(0);
-    const rankToIndex = (rank: ChessRankPosition): number => 8 - rank;
-    // Initialize board with pieces in initial positions
-    const initialPositions: { [key: string]: ChessPiece } = {
-      a1: { pieceType: 'R', pieceColor: 'W', moved: false },
-      b1: { pieceType: 'N', pieceColor: 'W', moved: false },
-      c1: { pieceType: 'B', pieceColor: 'W', moved: false },
-      d1: { pieceType: 'Q', pieceColor: 'W', moved: false },
-      e1: { pieceType: 'K', pieceColor: 'W', moved: false },
-      f1: { pieceType: 'B', pieceColor: 'W', moved: false },
-      g1: { pieceType: 'N', pieceColor: 'W', moved: false },
-      h1: { pieceType: 'R', pieceColor: 'W', moved: false },
-      a2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      b2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      c2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      d2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      e2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      f2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      g2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      h2: { pieceType: 'P', pieceColor: 'W', moved: false },
-      a7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      b7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      c7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      d7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      e7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      f7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      g7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      h7: { pieceType: 'P', pieceColor: 'B', moved: false },
-      a8: { pieceType: 'R', pieceColor: 'B', moved: false },
-      b8: { pieceType: 'N', pieceColor: 'B', moved: false },
-      c8: { pieceType: 'B', pieceColor: 'B', moved: false },
-      d8: { pieceType: 'Q', pieceColor: 'B', moved: false },
-      e8: { pieceType: 'K', pieceColor: 'B', moved: false },
-      f8: { pieceType: 'B', pieceColor: 'B', moved: false },
-      g8: { pieceType: 'N', pieceColor: 'B', moved: false },
-      h8: { pieceType: 'R', pieceColor: 'B', moved: false },
-    };
-    Object.entries(initialPositions).forEach(([key, piece]) => {
-      const file = key[0] as ChessFilePosition;
-      const rank = parseInt(key[1], 10) as ChessRankPosition;
-      if (piece) {
-        const cell: ChessCell = {
-          piece,
-        };
-        board[rankToIndex(rank)][fileToIndex(file)] = cell;
+    const readBoard = this.game?.state.board;
+    const board: ChessCell[][] = [];
+    for (let i = 0; i < 8; i++) {
+      const row: ChessCell[] = [];
+      for (let j = 0; j < 8; j++) {
+        if (!readBoard || !readBoard[i][j] || !readBoard[i][j]?.piece) {
+          row.push(undefined);
+        } else if (readBoard && readBoard[i][j]?.piece) {
+          const cell = readBoard[i][j]?.piece;
+          if (!cell) row.push(undefined);
+          else {
+            row.push({
+              piece: {
+                pieceColor: cell.pieceColor,
+                pieceType: cell.pieceType,
+                moved: cell.moved,
+              },
+            });
+          }
+        }
       }
-    });
+      board.push(row);
+    }
     return board;
   }
 

@@ -594,6 +594,19 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       this.state.board[this._rowToRank(_move.move.currentRank)][
         this._fileToIndex(_move.move.currentFile)
       ] = undefined;
+
+      if (this.isCheckmate()) {
+        if (_move.playerID === this.state.white) {
+          this.state.winner = this.state.white;
+          this.state.status = 'OVER';
+        } else {
+          this.state.winner = this.state.black;
+          this.state.status = 'OVER';
+        }
+      } else if (this.isStalemate()) {
+        this.state.winner = undefined;
+        this.state.status = 'OVER';
+      }
     } else {
       throw new InvalidParametersError('Invalid Move');
     }
