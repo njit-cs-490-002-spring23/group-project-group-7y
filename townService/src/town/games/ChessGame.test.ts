@@ -161,7 +161,6 @@ describe('ChessGame', () => {
           },
           gameID: '123',
         }); // Checkmate
-        game.printBoard();
         expect(game.isCheckmate()).toBe(true);
       });
     });
