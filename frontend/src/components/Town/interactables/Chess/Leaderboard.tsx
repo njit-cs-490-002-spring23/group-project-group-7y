@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameResult } from '../../../../types/CoveyTownSocket';
 import { Box, Button, Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
+import { fetchLeaderboard } from '../../../../services/gameService';
 
 export type LeaderBoardProp = {
   results: GameResult[];

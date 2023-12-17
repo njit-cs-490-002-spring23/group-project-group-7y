@@ -5,6 +5,7 @@
 import { fetchMiddlewares } from 'tsoa';
 import axios from 'axios';
 import { log } from 'node:console';
+import { isBreakOrContinueStatement } from 'typescript';
 import {
   ChessGameState,
   ChessMove,
@@ -258,6 +259,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           destinationRank: this._rowToRank(moveRowIndex),
         };
         possibleMoves.push(possibleMove);
+        break;
       } else if (board[moveRowIndex][moveColIndex]?.piece.pieceColor === gamePiece.pieceColor) {
         break;
       }
@@ -265,7 +267,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         break;
       }
       moveRowIndex += rowDisplacement;
-      moveColIndex += rowDisplacement;
+      moveColIndex += colDisplacement;
     }
   }
 
@@ -547,7 +549,40 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         return [];
       }
     }
-    return possibleMoves;
+    const checkCheckedMoves = [];
+    for (let i = 0; i < possibleMoves.length; i++) {
+      const tempBoard1 = this._applyMoveToTemporaryBoard(possibleMoves[i]);
+      if (!this.isKingInCheck(possibleMoves[i].gamePiece.pieceColor, tempBoard1)) {
+        checkCheckedMoves.push(possibleMoves[i]);
+      }
+    }
+    return checkCheckedMoves;
+  }
+
+  public multableBoard(readBoard: Readonly<ChessCell[][]>) {
+    const board: ChessCell[][] = [];
+    for (let i = 0; i < 8; i++) {
+      const row: ChessCell[] = [];
+      for (let j = 0; j < 8; j++) {
+        if (!readBoard || !readBoard[i][j] || !readBoard[i][j]?.piece) {
+          row.push(undefined);
+        } else if (readBoard && readBoard[i][j]?.piece) {
+          const cell = readBoard[i][j]?.piece;
+          if (!cell) row.push(undefined);
+          else {
+            row.push({
+              piece: {
+                pieceColor: cell.pieceColor,
+                pieceType: cell.pieceType,
+                moved: cell.moved,
+              },
+            });
+          }
+        }
+      }
+      board.push(row);
+    }
+    return board;
   }
 
   /*
@@ -1195,22 +1230,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return true;
   }
 
-  protected _applyMoveToTemporaryBoard(move: ChessMove): ChessGameState {
-    // Create a new game state object by copying the existing one
-    const tempGameState: ChessGameState = {
-      ...this.state,
-      moves: [...this.state.moves, move], // Add the new move to the end of the moves array
-    };
-
-    const tempBoard = this.state.board;
+  protected _applyMoveToTemporaryBoard(move: ChessMove): ChessCell[][] {
+    const tempBoard = this.multableBoard(this.multableBoard(this.state.board));
 
     // Translate the files to indices
     const fromFileIndex = this._fileToIndex(move.currentFile);
     const toFileIndex = this._fileToIndex(move.destinationFile);
 
     // Translate the ranks to indices
-    const fromRankIndex = move.currentRank - 1;
-    const toRankIndex = move.destinationRank - 1;
+    const fromRankIndex = this._rankToRow(move.currentRank);
+    const toRankIndex = this._rankToRow(move.destinationRank);
 
     // Get the piece being moved from the temporary board
     const piece = tempBoard[fromRankIndex][fromFileIndex];
@@ -1222,7 +1251,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     tempBoard[fromRankIndex][fromFileIndex] = undefined;
 
     // Return the updated game state
-    return tempGameState;
+    return tempBoard;
   }
 
   /**

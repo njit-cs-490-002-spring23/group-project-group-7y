@@ -70,6 +70,17 @@ app.use(
 // Endpoint to get all game histories
 app.get('/api/games', async (_req, res) => {
   try {
+    const games = await chessDatabase.databaseUpdate.getLeaderBoard();
+    res.json(games);
+  } catch (error) {
+    logError(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Endpoint to get all game histories
+app.get('/api/leaderboard', async (_req, res) => {
+  try {
     const games = await chessDatabase.databaseUpdate.getAllGames();
     res.json(games);
   } catch (error) {
