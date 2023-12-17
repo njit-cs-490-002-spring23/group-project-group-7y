@@ -1,6 +1,7 @@
 // TODO: remove all eslint-disable
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable class-methods-use-this */
+import { log } from 'node:console';
 import Player from '../../lib/Player';
 import {
   ChessGameState,
@@ -8,6 +9,7 @@ import {
   InteractableCommand,
   InteractableCommandReturnType,
   InteractableType,
+  PossibleMovesCommand,
 } from '../../types/CoveyTownSocket';
 import GameArea from './GameArea';
 import ChessGame from './ChessGame';
@@ -27,31 +29,6 @@ export default class ChessGameArea extends GameArea<ChessGame> {
 
   protected getType(): InteractableType {
     return this._type;
-  }
-
-  private _stateUpdated(updatedState: GameInstance<ChessGameState>) {
-    if (updatedState.state.status === 'OVER') {
-      // If we haven't yet recorded the outcome, do so now.
-      const gameID = this._game?.id;
-      if (gameID && !this._history.find(eachResult => eachResult.gameID === gameID)) {
-        const { white, black } = updatedState.state;
-        if (white && black) {
-          const xName =
-            this._occupants.find(eachPlayer => eachPlayer.id === white)?.userName || white;
-          const oName =
-            this._occupants.find(eachPlayer => eachPlayer.id === black)?.userName || black;
-          this._history.push({
-            gameID,
-            scores: {
-              [xName]: updatedState.state.winner === white ? 1 : 0,
-              [oName]: updatedState.state.winner === black ? 1 : 0,
-            },
-            moves: this._game?.state.moves ? this._game?.state.moves : [],
-          });
-        }
-      }
-    }
-    this._emitAreaChanged();
   }
 
   /**
@@ -93,10 +70,18 @@ export default class ChessGameArea extends GameArea<ChessGame> {
         playerID: player.id,
         move: command.move,
       });
-      this._stateUpdated(game.toModel());
+      this._emitAreaChanged();
       return undefined as InteractableCommandReturnType<CommandType>;
     }
     if (command.type === 'JoinGame') {
+      log('%s player trying to join', player.userName);
+      log(
+        'current game: id %s; white: %s; black: %s, status: %s',
+        this._game?.id,
+        this._game?.state.white,
+        this._game?.state.black,
+        this._game?.state.status,
+      );
       let game = this._game;
       if (!game || game.state.status === 'OVER') {
         // No game in progress, make a new one
@@ -104,8 +89,32 @@ export default class ChessGameArea extends GameArea<ChessGame> {
         this._game = game;
       }
       game.join(player);
-      this._stateUpdated(game.toModel());
+      log(
+        'interactableUpdate, %s player (id: %s) joined into game %s',
+        player.userName,
+        player.id,
+        this._game?.id,
+      );
+      log(
+        'id %s; white: %s; black: %s',
+        this._game?.id,
+        this._game?.state.white,
+        this._game?.state.black,
+      );
+      this._emitAreaChanged();
       return { gameID: game.id } as InteractableCommandReturnType<CommandType>;
+    }
+    if (command.type === 'PossibleMoves') {
+      const game = this._game;
+      if (!game) {
+        throw new InvalidParametersError(GAME_NOT_IN_PROGRESS_MESSAGE);
+      }
+      if (this._game?.id !== command.gameID) {
+        throw new InvalidParametersError(GAME_ID_MISSMATCH_MESSAGE);
+      }
+      const possibleMoves = game.boardPossibleMoves(command.rowIndex, command.colIndex);
+      this._emitAreaChanged();
+      return { possibleMoves } as InteractableCommandReturnType<CommandType>;
     }
     if (command.type === 'LeaveGame') {
       const game = this._game;
@@ -116,7 +125,19 @@ export default class ChessGameArea extends GameArea<ChessGame> {
         throw new InvalidParametersError(GAME_ID_MISSMATCH_MESSAGE);
       }
       game.leave(player);
-      this._stateUpdated(game.toModel());
+      this._emitAreaChanged();
+      return undefined as InteractableCommandReturnType<CommandType>;
+    }
+    if (command.type === 'DrawGame') {
+      const game = this._game;
+      if (!game) {
+        throw new InvalidParametersError(GAME_NOT_IN_PROGRESS_MESSAGE);
+      }
+      if (this._game?.id !== command.gameID) {
+        throw new InvalidParametersError(GAME_ID_MISSMATCH_MESSAGE);
+      }
+      game.drawGame(command.message, player);
+      this._emitAreaChanged();
       return undefined as InteractableCommandReturnType<CommandType>;
     }
     throw new InvalidParametersError(INVALID_COMMAND_MESSAGE);

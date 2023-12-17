@@ -26,6 +26,7 @@ import GameAreaInteractable from '../GameArea';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import GameReview from './GameReview';
 import { fetchAllGames } from '../../../../services/gameService';
+import { cpuUsage } from 'process';
 
 export type ChessGameProp = {
   gameAreaController: ChessAreaController;
@@ -64,8 +65,8 @@ function JoinButton(props: {
   mainMenuPage: () => void;
 }): JSX.Element {
   const gameAreaController = props.gameAreaController;
-  const mainMenu = () => props.mainMenuPage();
-  const multiplayer = () => props.multiplayerPage();
+  const mainMenu = props.mainMenuPage();
+  const multiplayer = props.multiplayerPage();
   const [isLoading, setIsLoading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [buttonText, setButtonText] = useState('Join Multiplayer');
@@ -85,7 +86,7 @@ function JoinButton(props: {
           setButtonText('Loading');
           await gameAreaController
             .joinGame()
-            .then(() => multiplayer())
+            .then(() => props.multiplayerPage())
             .catch(e => {
               console.log(e);
               displayToast({
@@ -94,7 +95,6 @@ function JoinButton(props: {
                 status: 'error',
               });
             });
-          multiplayer();
           setIsDisabled(false);
           setIsLoading(false);
           setButtonText('Join Multiplayer');
@@ -108,10 +108,16 @@ function JoinButton(props: {
 
 function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.Element {
   const gameAreaController = useInteractableAreaController<ChessAreaController>(interactableID);
+  const displayToast = useToast();
   const [chessResults, setChessResults] = useState<GameResult[]>(generateDummyChessResults());
   const [currentPage, setcurrentPage] = useState('mainMenu');
   const [gameHistories, setGameHistories] = useState<GameData[]>([]);
   const townController = useTownController();
+  useEffect(() => {
+    fetchAllGames().then((fetchedGames: React.SetStateAction<GameData[]>) => {
+      setGameHistories(fetchedGames);
+    });
+  }, []);
 
   const mainMenuPage = () => {
     setcurrentPage('mainMenu');
@@ -120,17 +126,13 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
     setcurrentPage('leaderboard');
   };
   const multiplayerPage = () => {
-    setcurrentPage('multiplayer');
+    if (currentPage != 'multiplayer') {
+      setcurrentPage('multiplayer');
+    }
   };
   const gameReviewPage = () => {
     setcurrentPage('gamereview');
   };
-
-  useEffect(() => {
-    fetchAllGames().then((fetchedGames: React.SetStateAction<GameData[]>) => {
-      setGameHistories(fetchedGames);
-    });
-  }, []);
 
   //diaplay proper page
   if (currentPage === 'leaderboard') {
@@ -165,11 +167,44 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
           <h2>Main Menu</h2>
         </Box>
         <Container width='50%' style={{ marginLeft: '45%', marginTop: '25%' }}>
-          <JoinButton
-            multiplayerPage={multiplayerPage}
-            mainMenuPage={mainMenuPage}
-            gameAreaController={gameAreaController}
-          />
+          {gameAreaController.status !== 'IN_PROGRESS' ? (
+            <HomeScreenButton
+              bg='green'
+              color='white'
+              variant='outline'
+              onClick={async () => {
+                try {
+                  await gameAreaController.joinGame().catch(e => {
+                    displayToast({
+                      title: 'Join Failed',
+                      description: `Error: ${(e as Error).message}`,
+                      status: 'error',
+                    });
+                  });
+                } catch (e) {
+                  displayToast({
+                    title: 'Join Failed',
+                    description: `Error: ${(e as Error).message}`,
+                    status: 'error',
+                  });
+                }
+                if (
+                  gameAreaController.white &&
+                  gameAreaController.white.id === townController.ourPlayer.id
+                ) {
+                  multiplayerPage();
+                } else if (
+                  gameAreaController.black &&
+                  gameAreaController.black.id === townController.ourPlayer.id
+                ) {
+                  multiplayerPage();
+                }
+              }}>
+              {'Join Multiplayer'}
+            </HomeScreenButton>
+          ) : (
+            <> </>
+          )}
           <HomeScreenButton
             bg='green'
             color='white'
