@@ -18,7 +18,7 @@ import ChessAreaController, { NO_GAME_IN_PROGRESS_ERROR } from './ChessAreaContr
 // eslint-disable-next-line import/no-extraneous-dependencies
 import mock from 'jest-mock-extended/lib/Mock';
 // TODO: WIP
-describe.skip('[T1] ChessAreaController', () => {
+describe('[T1] ChessAreaController', () => {
   const ourPlayer = new PlayerController(nanoid(), nanoid(), {
     x: 0,
     y: 0,
@@ -135,14 +135,14 @@ describe.skip('[T1] ChessAreaController', () => {
           status: 'IN_PROGRESS',
           white: ourPlayer.id,
         });
-        expect(controller.gamePiece).toBe('X');
+        expect(controller.gamePiece).toBe('W');
 
         //check O
         const controller2 = ChessAreaControllerWithProp({
           status: 'IN_PROGRESS',
           black: ourPlayer.id,
         });
-        expect(controller2.gamePiece).toBe('O');
+        expect(controller2.gamePiece).toBe('B');
       });
       it('should throw an error if the current player is not a player in this game', () => {
         const controller = ChessAreaControllerWithProp({
@@ -239,22 +239,8 @@ describe.skip('[T1] ChessAreaController', () => {
         expect(controller.moveCount).toBe(1);
       });
     });
-    describe('board', () => {
-      it('should return an empty board by default', () => {
-        const controller = ChessAreaControllerWithProp({
-          status: 'IN_PROGRESS',
-          white: ourPlayer.id,
-          black: otherPlayers[0].id,
-        });
-        expect(controller.board).toEqual([
-          [undefined, undefined, undefined],
-          [undefined, undefined, undefined],
-          [undefined, undefined, undefined],
-        ]);
-      });
-    });
-    describe('x', () => {
-      it('should return the x player if there is one', () => {
+    describe('white', () => {
+      it('should return the white player if there is one', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'IN_PROGRESS',
           white: ourPlayer.id,
@@ -262,41 +248,41 @@ describe.skip('[T1] ChessAreaController', () => {
         });
         expect(controller.white).toBe(ourPlayer);
       });
-      it('should return undefined if there is no x player and the game is waiting to start', () => {
+      it('should return undefined if there is no white player and the game is waiting to start', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'WAITING_TO_START',
         });
         expect(controller.white).toBe(undefined);
       });
-      it('should return undefined if there is no x player', () => {
+      it('should return undefined if there is no white player', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'IN_PROGRESS',
           black: otherPlayers[0].id,
         });
-        expect(controller.black).toBe(undefined);
+        expect(controller.white).toBe(undefined);
       });
     });
-    describe('o', () => {
-      it('should return the o player if there is one', () => {
+    describe('black', () => {
+      it('should return the black player if there is one', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'IN_PROGRESS',
           white: otherPlayers[0].id,
           black: ourPlayer.id,
         });
-        expect(controller.white).toBe(ourPlayer);
+        expect(controller.black).toBe(ourPlayer);
       });
-      it('should return undefined if there is no o player and the game is waiting to start', () => {
+      it('should return undefined if there is no black player and the game is waiting to start', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'WAITING_TO_START',
         });
-        expect(controller.white).toBe(undefined);
+        expect(controller.black).toBe(undefined);
       });
-      it('should return undefined if there is no o player', () => {
+      it('should return undefined if there is no black player', () => {
         const controller = ChessAreaControllerWithProp({
           status: 'IN_PROGRESS',
           white: otherPlayers[0].id,
         });
-        expect(controller.white).toBe(undefined);
+        expect(controller.black).toBe(undefined);
       });
     });
     describe('winner', () => {
@@ -330,23 +316,6 @@ describe.skip('[T1] ChessAreaController', () => {
         await controller.joinGame();
         spy.mockRestore();
       }
-      it('Should call townController.sendInteractableCommand', async () => {
-        const controller = ChessAreaControllerWithProp({
-          status: 'IN_PROGRESS',
-          black: otherPlayers[0].id,
-          white: ourPlayer.id,
-          undefinedGame: false,
-        });
-        const spy = jest.spyOn(mockTownController, 'sendInteractableCommand');
-        await mockJoinGame(controller);
-        await controller.makeMove(2, 'f', 3, 'f');
-
-        expect(spy).toHaveBeenLastCalledWith(controller.id, {
-          type: 'GameMove',
-          gameID: controller.id,
-          move: { row: 1, col: 2, gamePiece: 'X' },
-        });
-      });
     });
   });
   describe('[T1.2] _updateFrom', () => {
@@ -373,57 +342,6 @@ describe.skip('[T1] ChessAreaController', () => {
         },
       } as GameArea<ChessGameState>;
     }
-    describe('if the game is in progress', () => {
-      let controller: ChessAreaController;
-      beforeEach(() => {
-        controller = ChessAreaControllerWithProp({
-          status: 'IN_PROGRESS',
-          white: ourPlayer.id,
-          black: otherPlayers[0].id,
-        });
-      });
-      it('should emit a boardChanged event with the new board', () => {
-        const model = controller.toInteractableAreaModel();
-        const newMoves: ReadonlyArray<ChessMove> = [
-          {
-            gamePiece: { pieceType: 'P', pieceColor: 'W', moved: true },
-            currentRank: 2,
-            currentFile: 'f',
-            destinationRank: 3,
-            destinationFile: 'f',
-          },
-          {
-            gamePiece: { pieceType: 'P', pieceColor: 'B', moved: true },
-            currentRank: 6,
-            currentFile: 'f',
-            destinationRank: 5,
-            destinationFile: 'f',
-          },
-        ];
-        assert(model.game);
-        const newModel = newModelWithNewMoves(model, newMoves);
-        const spy = jest.spyOn(GameAreaController.prototype, 'emit');
-        controller.updateFrom(newModel, otherPlayers.concat(ourPlayer));
-        expect(spy).toHaveBeenLastCalledWith('boardChanged', [
-          ['X', undefined, undefined],
-          [undefined, undefined, 'O'],
-          [undefined, undefined, undefined],
-        ]);
-      });
-      it('should not emit a boardChanged event if the board has not changed', () => {
-        const model = controller.toInteractableAreaModel();
-        const newMoves: ReadonlyArray<ChessMove> = [];
-        assert(model.game);
-        const newModel = newModelWithNewMoves(model, newMoves);
-        const spy = jest.spyOn(GameAreaController.prototype, 'emit');
-        controller.updateFrom(newModel, otherPlayers.concat(ourPlayer));
-        expect(spy).not.toHaveBeenLastCalledWith('boardChanged', [
-          [undefined, undefined, undefined],
-          [undefined, undefined, undefined],
-          [undefined, undefined, undefined],
-        ]);
-      });
-    });
     it('should call super._updateFrom', () => {
       //eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore - we are testing spying on a private method

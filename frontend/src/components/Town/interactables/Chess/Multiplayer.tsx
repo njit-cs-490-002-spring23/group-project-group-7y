@@ -1,10 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { BoardLocation, ChessCell, PlayerID } from '../../../../types/CoveyTownSocket';
-import { Box, Button, Container, chakra, Image, ButtonGroup, useToast } from '@chakra-ui/react';
+import { BoardLocation, ChessCell } from '../../../../types/CoveyTownSocket';
+import { Box, Button, Container, chakra, ButtonGroup, useToast } from '@chakra-ui/react';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import useTownController from '../../../../hooks/useTownController';
-import PlayerController from '../../../../classes/PlayerController';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessRow = chakra(Box, {
