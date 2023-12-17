@@ -1,5 +1,6 @@
 import { ITiledMap, ITiledMapObjectLayer } from '@jonbell/tiled-map-type-guard';
 import { nanoid } from 'nanoid';
+import { log } from 'node:console';
 import { BroadcastOperator } from 'socket.io';
 import InvalidParametersError from '../lib/InvalidParametersError';
 import IVideoClient from '../lib/IVideoClient';
@@ -165,6 +166,7 @@ export default class Town {
     // Set up a listener to process commands to interactables.
     // Dispatches commands to the appropriate interactable and sends the response back to the client
     socket.on('interactableCommand', (command: InteractableCommand & InteractableCommandBase) => {
+      log('interactableCommand, type: %s', command.type);
       const interactable = this._interactables.find(
         eachInteractable => eachInteractable.id === command.interactableID,
       );

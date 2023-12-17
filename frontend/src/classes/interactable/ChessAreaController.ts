@@ -6,6 +6,8 @@ import {
   ChessFilePosition,
   ChessPiece,
   ChessRankPosition,
+  BoardLocation,
+  PlayerID,
 } from '../../types/CoveyTownSocket';
 import PlayerController from '../PlayerController';
 import GameAreaController, { GameEventTypes } from './GameAreaController';
@@ -83,6 +85,13 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
       }
     });
     return board;
+  }
+
+  /**
+   * Returns the player with the 'X' game piece, if there is one, or undefined otherwise
+   */
+  get game() {
+    return this._model.game;
   }
 
   /**
@@ -169,6 +178,10 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
     return this._model.game !== undefined && this._model.game.state.status === 'IN_PROGRESS';
   }
 
+  public drawOfferer(): PlayerID | undefined {
+    return this._model.game?.state.drawOffer;
+  }
+
   /**
    * Updates the internal state of this ChessAreaController to match the new model.
    *
@@ -182,24 +195,34 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * If the turn has not changed, does not emit the event.
    */
   protected _updateFrom(newModel: GameArea<ChessGameState>): void {
+    console.log('Chess Agrea State Updated Called');
     const boardBeforeUpdate = this.board;
     const turnBeforeUpdate = this.whoseTurn;
+    const beforeDrawOffer = this.game?.state.drawOffer;
     super._updateFrom(newModel);
     let boardChangedFlag = false;
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       if (boardChangedFlag) break;
-      for (let j = 0; j < 3; j += 1) {
+      for (let j = 0; j < 8; j += 1) {
         const cellBeforeUpdate = boardBeforeUpdate[i][j];
         const cellAfterUpdate = this.board[i][j];
-        if ((cellBeforeUpdate || cellAfterUpdate) && cellBeforeUpdate !== cellAfterUpdate) {
-          boardChangedFlag = true;
-          break;
+        if (cellAfterUpdate && cellAfterUpdate) {
+          if (
+            cellAfterUpdate.piece.pieceColor !== cellBeforeUpdate?.piece.pieceColor ||
+            cellAfterUpdate.piece.pieceType !== cellBeforeUpdate.piece.pieceColor
+          ) {
+            boardChangedFlag = true;
+            break;
+          }
         }
       }
     }
     if (boardChangedFlag) this.emit('boardChanged', this.board);
     if ((turnBeforeUpdate || this.whoseTurn) && turnBeforeUpdate?.id !== this.whoseTurn?.id) {
       this.emit('turnChanged', this.isOurTurn);
+    }
+    if (this.game && beforeDrawOffer !== this.drawOfferer()) {
+      this.emit('drawOffered', this.game.state.drawOffer);
     }
   }
 
@@ -215,27 +238,103 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * @param col Column of the move
    */
   public async makeMove(
-    gamePiece: ChessPiece,
-    currentRank: ChessRankPosition,
-    currentFile: ChessFilePosition,
-    destinationRank: ChessRankPosition,
-    destinationFile: ChessFilePosition,
-    enPassant: boolean,
+    currentRowIndex: number,
+    currentColIndex: number,
+    destinationRowIndex: number,
+    destinationColIndex: number,
   ) {
+    const cellPiece = this._model.game?.state.board[currentRowIndex][currentColIndex]?.piece;
     if (!this._instanceID || !this.isActive()) throw new Error(exports.NO_GAME_IN_PROGRESS_ERROR);
-    else {
+    else if (cellPiece !== undefined) {
       await this._townController.sendInteractableCommand(this.id, {
         gameID: this._instanceID,
         move: {
-          gamePiece: gamePiece,
-          currentRank: currentRank,
-          currentFile: currentFile,
-          destinationRank: destinationRank,
-          destinationFile: destinationFile,
-          enPassant: enPassant,
+          gamePiece: cellPiece,
+          currentRank: this._rowToRank(currentRowIndex),
+          currentFile: this._columnToFile(currentColIndex),
+          destinationRank: this._rowToRank(destinationRowIndex),
+          destinationFile: this._columnToFile(destinationColIndex),
         },
         type: 'GameMove',
       });
     }
+  }
+
+  /*
+   * Convert file position to column index in board and return index
+   *
+   * @param {file} The chess board file
+   */
+  private _fileToColumn(file: ChessFilePosition) {
+    return file.charCodeAt(0) - 'a'.charCodeAt(0);
+  }
+
+  /*
+   * Convert rank position to index in board and return index
+   *
+   * @param rank The chess board rank
+   */
+  private _rankToRow(rank: ChessRankPosition) {
+    return 8 - rank;
+  }
+
+  /*
+   * Convert column index to file position return file
+   *
+   * @param file The chess board file
+   */
+  private _columnToFile(columnIndex: number): ChessFilePosition {
+    return String.fromCharCode(columnIndex + 'a'.charCodeAt(0)) as ChessFilePosition;
+  }
+
+  /*
+   * Convert row index to chess rank and return rank
+   *
+   * @param rank The chess board rank
+   */
+  private _rowToRank(rowIndex: number): ChessRankPosition {
+    return (8 - rowIndex) as ChessRankPosition;
+  }
+
+  /**
+   * Sends a request to the server to get the possible moves for a game piece at chess square location
+   *
+   * @param rowIndex
+   * @param colIndex
+   * @returns {ChessMove[]}
+   * @throws An error if the server rejects the request to join the game.
+   */
+  public async possibleMoves(rowIndex: number, colIndex: number): Promise<BoardLocation[]> {
+    if (!this._instanceID || !this.isActive()) throw new Error('Game Not In Progress');
+    const { possibleMoves } = await this._townController.sendInteractableCommand(this.id, {
+      gameID: this._instanceID,
+      type: 'PossibleMoves',
+      rowIndex: rowIndex,
+      colIndex: colIndex,
+    });
+    const moves: BoardLocation[] = [];
+    for (let i = 0; i < possibleMoves.length; i++) {
+      const move = possibleMoves[i];
+      moves.push({
+        rowIndex: this._rankToRow(move.destinationRank),
+        colIndex: this._fileToColumn(move.destinationFile),
+      });
+    }
+    return moves;
+  }
+
+  /**
+   * Send draw request with either offer, accept, or reject to server
+   *
+   * @param type accept, offer, or reject
+   * @throws An error if the server rejects the request to join the game.
+   */
+  public async drawCommand(type: string) {
+    if (!this._instanceID || !this.isActive()) throw new Error('Game Not In Progress');
+    await this._townController.sendInteractableCommand(this.id, {
+      gameID: this._instanceID,
+      type: 'DrawGame',
+      message: type,
+    });
   }
 }

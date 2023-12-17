@@ -165,6 +165,10 @@ export interface ChessMove {
   destinationRank: ChessRankPosition;
   destinationFile: ChessFilePosition;
 }
+export type BoardLocation = {
+  rowIndex: number;
+  colIndex: number;
+};
 
 export type ChessRankPosition = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -188,6 +192,8 @@ export interface ChessGameState extends WinnableGameState {
   moves: ReadonlyArray<ChessMove>;
   white?: PlayerID;
   black?: PlayerID;
+  drawOffer?: PlayerID;
+  drawAccept?: PlayerID;
   halfMoves: number;
 }
 
@@ -248,12 +254,28 @@ interface InteractableCommandBase {
 export type InteractableCommand =
   | ViewingAreaUpdateCommand
   | JoinGameCommand
+  | PossibleMovesCommand
+  | DrawGameCommand
   | GameMoveCommand<ChessMove>
   | LeaveGameCommand;
 export interface ViewingAreaUpdateCommand {
   type: 'ViewingAreaUpdate';
   update: ViewingArea;
 }
+
+export interface PossibleMovesCommand {
+  type: 'PossibleMoves';
+  gameID: GameInstanceID;
+  rowIndex: number;
+  colIndex: number;
+}
+
+export interface DrawGameCommand {
+  type: 'DrawGame';
+  gameID: GameInstanceID;
+  message: string;
+}
+
 export interface JoinGameCommand {
   type: 'JoinGame';
 }
@@ -266,6 +288,7 @@ export interface GameMoveCommand<MoveType> {
   gameID: GameInstanceID;
   move: MoveType;
 }
+
 export type InteractableCommandReturnType<CommandType extends InteractableCommand> =
   CommandType extends JoinGameCommand
     ? { gameID: string }
@@ -275,6 +298,10 @@ export type InteractableCommandReturnType<CommandType extends InteractableComman
     ? undefined
     : CommandType extends LeaveGameCommand
     ? undefined
+    : CommandType extends DrawGameCommand
+    ? undefined
+    : CommandType extends PossibleMovesCommand
+    ? { possibleMoves: ChessMove[] }
     : never;
 
 export type InteractableCommandResponse<MessageType> = {

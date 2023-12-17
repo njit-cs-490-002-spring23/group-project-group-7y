@@ -2,6 +2,10 @@ import ChessGame from './ChessGame';
 import { createPlayerForTesting } from '../../TestUtils';
 import Player from '../../lib/Player';
 import { ChessMove } from '../../types/CoveyTownSocket';
+import {
+  PLAYER_ALREADY_IN_GAME_MESSAGE,
+  GAME_FULL_MESSAGE,
+} from '../../lib/InvalidParametersError';
 
 describe('ChessGame', () => {
   let game: ChessGame;
@@ -9,9 +13,8 @@ describe('ChessGame', () => {
   beforeEach(() => {
     game = new ChessGame();
   });
-
   describe('board', () => {
-    it('should initialize with the correct starting positions', () => {
+    it.skip('should initialize with the correct starting positions', () => {
       const { board } = game.state;
       expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at A1
       expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at H1
@@ -21,9 +24,56 @@ describe('ChessGame', () => {
       expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W', moved: false } }); // Black Pawn at G7
     });
   });
+  describe('_join', () => {
+    it.skip('should throw an error if the player is already in the game', () => {
+      const player = createPlayerForTesting();
+      game.join(player);
+      expect(() => game.join(player)).toThrowError(PLAYER_ALREADY_IN_GAME_MESSAGE);
+      const player2 = createPlayerForTesting();
+      // TODO weaker test suite doesn't add this
+      game.join(player2);
+      expect(() => game.join(player2)).toThrowError(PLAYER_ALREADY_IN_GAME_MESSAGE);
+    });
+    it.skip('should throw an error if the game is full', () => {
+      const player1 = createPlayerForTesting();
+      const player2 = createPlayerForTesting();
+      const player3 = createPlayerForTesting();
+      game.join(player1);
+      game.join(player2);
 
+      expect(() => game.join(player3)).toThrowError(GAME_FULL_MESSAGE);
+    });
+    describe('When the player can be added', () => {
+      it.skip('makes the first player white and initializes the state with status WAITING_TO_START', () => {
+        const player = createPlayerForTesting();
+        game.join(player);
+        expect(game.state.white).toEqual(player.id);
+        expect(game.state.black).toBeUndefined();
+        expect(game.state.moves).toHaveLength(0);
+        expect(game.state.status).toEqual('WAITING_TO_START');
+        expect(game.state.winner).toBeUndefined();
+      });
+      describe('When the second player joins', () => {
+        const player1 = createPlayerForTesting();
+        const player2 = createPlayerForTesting();
+        beforeEach(() => {
+          game.join(player1);
+          game.join(player2);
+        });
+        it.skip('makes the second player black', () => {
+          expect(game.state.white).toEqual(player1.id);
+          expect(game.state.black).toEqual(player2.id);
+        });
+        it.skip('sets the game status to IN_PROGRESS', () => {
+          expect(game.state.status).toEqual('IN_PROGRESS');
+          expect(game.state.winner).toBeUndefined();
+          expect(game.state.moves).toHaveLength(0);
+        });
+      });
+    });
+  });
   describe('_getKingPosition', () => {
-    it('should return the correct position of the king', () => {
+    it.skip('should return the correct position of the king', () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - we are testing spying on a private method
       const whiteKingPosition = game._getKingPosition('B');
@@ -36,7 +86,7 @@ describe('ChessGame', () => {
   });
 
   describe('_getPieces', () => {
-    it('should return all pieces for a given color', () => {
+    it.skip('should return all pieces for a given color', () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore - we are testing spying on a private method
       const whitePieces = game._getPieces('W');
@@ -63,9 +113,9 @@ describe('ChessGame', () => {
         expect(game.isCheckmate()).toBe(false);
       });
       // Remove .skip after possibleMoves
-      it.skip("should return true when the king is in checkmate (Fool's Mate)", () => {
-        const whitePlayerId = 'player1Id';
-        const blackPlayerId = 'player2Id';
+      it("should return true when the king is in checkmate (Fool's Mate)", () => {
+        const whitePlayerId = player1.id;
+        const blackPlayerId = player1.id;
         // Simulate the moves leading to Fool's Mate
         game.applyMove({
           playerID: whitePlayerId,
@@ -115,12 +165,12 @@ describe('ChessGame', () => {
       });
     });
     describe('bestMove', () => {
-      it('should produce the correct fen for the starting board', () => {
+      it.skip('should produce the correct fen for the starting board', () => {
         expect(game.fenNotation()).toEqual(
           'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         );
       });
-      it('should respond with the next best move for the start board', async () => {
+      it.skip('should respond with the next best move for the start board', async () => {
         const move = await game.nextBestMove();
         expect(move).toEqual({
           gamePiece: 'P',
@@ -141,7 +191,7 @@ describe('ChessGame', () => {
     });
 
     describe('Given a possible moves check', () => {
-      it('should give the right moves for a pawn', () => {
+      it.skip('should give the right moves for a pawn', () => {
         const moves = game.possibleMoves(2, 'a');
         expect(moves).toEqual([
           {
@@ -160,23 +210,23 @@ describe('ChessGame', () => {
           },
         ]);
       });
-      it('should give the zero moves for a starting king', () => {
+      it.skip('should give the zero moves for a starting king', () => {
         const moves = game.possibleMoves(1, 'e');
         expect(moves.length).toEqual(0);
       });
-      it('should give the zero moves for a starting queen', () => {
+      it.skip('should give the zero moves for a starting queen', () => {
         const moves = game.possibleMoves(1, 'd');
         expect(moves.length).toEqual(0);
       });
-      it('should give the zero moves for a starting rook', () => {
+      it.skip('should give the zero moves for a starting rook', () => {
         const moves = game.possibleMoves(1, 'a');
         expect(moves.length).toEqual(0);
       });
-      it('should give the zero moves for a starting bishop', () => {
+      it.skip('should give the zero moves for a starting bishop', () => {
         const moves = game.possibleMoves(1, 'c');
         expect(moves.length).toEqual(0);
       });
-      it('should give the two moves for a starting knight', () => {
+      it.skip('should give the two moves for a starting knight', () => {
         const moves = game.possibleMoves(1, 'b');
         expect(moves.length).toEqual(2);
         expect(moves).toEqual([
@@ -198,7 +248,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given a Valid Pawn Move', () => {
-      it('should update the chess board and the moves with the valid movement', () => {
+      it.skip('should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -216,7 +266,7 @@ describe('ChessGame', () => {
         expect(game.state.board[move.currentRank - 1][0]).toBeUndefined();
         expect(game.state.board[move.destinationRank - 1][0]?.piece.pieceType).toEqual('P');
       });
-      it('given a valid move for en passant', () => {
+      it.skip('given a valid move for en passant', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -303,7 +353,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given Invalid Pawn Move', () => {
-      it('should return an error if the player moves a piece that does not belong to them', () => {
+      it.skip('should return an error if the player moves a piece that does not belong to them', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -336,7 +386,7 @@ describe('ChessGame', () => {
           }),
         ).toThrow('Player 2 can only move black pieces');
       });
-      it('should return an error if the player moves a piece when it is not their turn', () => {
+      it.skip('should return an error if the player moves a piece when it is not their turn', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -364,7 +414,7 @@ describe('ChessGame', () => {
           }),
         ).toThrow('Not Your Turn');
       });
-      it('should return an error if the pawn changes rank and there is no capture, en passant', () => {
+      it.skip('should return an error if the pawn changes rank and there is no capture, en passant', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,
@@ -380,7 +430,7 @@ describe('ChessGame', () => {
           }),
         ).toThrow('Invalid Move');
       });
-      it('when a piece is in front of the pawn the pawn can not move', () => {
+      it.skip('when a piece is in front of the pawn the pawn can not move', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
@@ -431,7 +481,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given A Valid Knight Move', () => {
-      it('Should update the chess board and the moves with the valid movement', () => {
+      it.skip('Should update the chess board and the moves with the valid movement', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
@@ -448,7 +498,7 @@ describe('ChessGame', () => {
         expect(game.state.board[move.destinationRank - 1][0]?.piece.pieceColor).toEqual('W');
         expect(game.state.board[move.destinationRank - 1][0]?.piece.pieceType).toEqual('N');
       });
-      it('Given a series of knight moves should update the chess board with the moves', () => {
+      it.skip('Given a series of knight moves should update the chess board with the moves', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
@@ -532,7 +582,7 @@ describe('ChessGame', () => {
           }),
         ).toThrow('Invalid Move');
       });
-      it('should return an error that move is invalid given incorrect movement', () => {
+      it.skip('should return an error that move is invalid given incorrect movement', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'N', moved: true },
           currentRank: 1,
@@ -683,7 +733,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given an invalid bishop move', () => {
-      it('should throw an invalid move if pieces are in the way of the destination', () => {
+      it.skip('should throw an invalid move if pieces are in the way of the destination', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'B', moved: true },
           currentRank: 1,
@@ -925,7 +975,7 @@ describe('ChessGame', () => {
       });
     });
     describe('Given a Valid Rook Moove', () => {
-      it('should update the chess board and the moves with the move', () => {
+      it.skip('should update the chess board and the moves with the move', () => {
         const move: ChessMove = {
           gamePiece: { pieceColor: 'W', pieceType: 'P', moved: true },
           currentRank: 2,

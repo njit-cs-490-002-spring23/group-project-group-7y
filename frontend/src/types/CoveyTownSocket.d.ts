@@ -10,5 +10,5 @@ import { Socket } from 'socket.io-client';
 import { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types/CoveyTownSocket';
 /* eslint-disable import/no-relative-packages */
 export * from '../../../shared/types/CoveyTownSocket';
-
+export { BoardLocation } from '../../../shared/types/CoveyTownSocket';
 export type CoveyTownSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

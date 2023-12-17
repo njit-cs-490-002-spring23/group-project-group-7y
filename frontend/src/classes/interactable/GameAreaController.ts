@@ -100,6 +100,11 @@ export default abstract class GameAreaController<
       _.xor(newPlayers, this._players).length > 0
     ) {
       this._players = newPlayers;
+      if (this._players.length == 2) {
+        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.emit('fullGame', newPlayers);
+      }
       //TODO - Bounty for figuring out how to make the types work here
       //eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

@@ -339,14 +339,8 @@ describe.skip('[T1] ChessAreaController', () => {
         });
         const spy = jest.spyOn(mockTownController, 'sendInteractableCommand');
         await mockJoinGame(controller);
-        await controller.makeMove(
-          { pieceType: 'P', pieceColor: 'W', moved: true },
-          2,
-          'f',
-          3,
-          'f',
-          false,
-        );
+        await controller.makeMove(2, 'f', 3, 'f');
+
         expect(spy).toHaveBeenLastCalledWith(controller.id, {
           type: 'GameMove',
           gameID: controller.id,

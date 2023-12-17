@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import React, { useEffect } from 'react';
-import { ChessCell } from '../../../../types/CoveyTownSocket';
-import { Box, Container, chakra } from '@chakra-ui/react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react';
+import { BoardLocation, ChessCell, PlayerID } from '../../../../types/CoveyTownSocket';
+import { Box, Button, Container, chakra, Image, ButtonGroup, useToast } from '@chakra-ui/react';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import useTownController from '../../../../hooks/useTownController';
+import PlayerController from '../../../../classes/PlayerController';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessRow = chakra(Box, {
   baseStyle: {
     display: 'flex',
@@ -17,6 +19,7 @@ const StyledChessRow = chakra(Box, {
 /**
  * A component that will render a single cell in the Chess board, styled
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessSquare = chakra(Box, {
   baseStyle: {
     justifyContent: 'center',
@@ -29,9 +32,9 @@ const StyledChessSquare = chakra(Box, {
 /**
  * A component that will render the Chess board, styled
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessBoard = chakra(Container, {
   baseStyle: {
-    bg: 'transparent',
     display: 'flex',
     width: '350px',
     height: '350px',
@@ -49,44 +52,113 @@ export default function Multiplayer(props: {
   mainMenu: () => void;
 }): JSX.Element {
   const gameAreaController = props.gameAreaController;
+  // use a state to keep track of number of modification to controller so components are re-rendered when listners pick up a emit
+  const [controllerModifiedCounter, setControllerModifiedCounter] = useState(0);
   // set up component state and listerners so board and cells re-render when updated
-  const [gameBoard, setBoard] = React.useState(gameAreaController.board);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [ourTurn, setOurTurn] = React.useState(gameAreaController.isOurTurn);
+  const [gameBoard, setBoard] = useState(gameAreaController.board);
+  const [ourTurn, setOurTurn] = useState(gameAreaController.isOurTurn);
+  const [drawOffered, setDrawOffered] = useState(false);
+  const [drawOfferSent, setDrawOfferSent] = useState(false);
+  const [titleMessage, setTitleMessage] = useState<string>('Waiting For Second Player ...');
+  const [possibleMovesCell, setPossibleMovesCell] = useState<{
+    sourceRowIndex: number | undefined;
+    sourceColIndex: number | undefined;
+  }>({
+    sourceRowIndex: undefined,
+    sourceColIndex: undefined,
+  });
+  const [possibleMoves, setPossibeMoves] = useState<BoardLocation[]>([]);
+  const townController = useTownController();
+  const displayToast = useToast();
+  const updateTitle = () => {
+    let opponent: string;
+    if (gameAreaController.white && gameAreaController.black) {
+      if (townController.ourPlayer.id === gameAreaController.white.id) {
+        opponent = gameAreaController.black.userName;
+      } else {
+        opponent = gameAreaController.white.userName;
+      }
+      setTitleMessage(`You v. ${opponent}`);
+    }
+  };
+  const updateDrawButtons = () => {
+    if (gameAreaController.drawOfferer()) {
+      if (gameAreaController.drawOfferer() != townController.ourPlayer.id) {
+        setDrawOffered(true);
+      } else if (gameAreaController.drawOfferer() === townController.ourPlayer.id) {
+        setDrawOfferSent(true);
+      } else if (gameAreaController.drawOfferer() !== townController.ourPlayer.id) {
+        setDrawOfferSent(false);
+      }
+    }
+  };
   useEffect(() => {
     function turnChangedEventHandler(turn: boolean) {
       setOurTurn(turn);
     }
     function boardChangedEventHandler(board: ChessCell[][]) {
+      console.log('changing board');
       setBoard(board);
     }
-
+    function drawOfferedEventHandler() {
+      setControllerModifiedCounter(controllerModifiedCounter + 1);
+      updateDrawButtons();
+    }
+    const gameEndEventHandler = () => {
+      let gameOverMessage: string;
+      const winner = gameAreaController.winner;
+      if (winner) {
+        if (winner.id == townController.ourPlayer.id) gameOverMessage = 'You won!';
+        else gameOverMessage = 'You lost :(';
+      } else gameOverMessage = 'Game Drawed';
+      displayToast({
+        title: 'Game Over',
+        description: gameOverMessage,
+      });
+      setControllerModifiedCounter(controllerModifiedCounter + 1);
+      props.mainMenu();
+    };
+    const gameUpdatedEventHandler = () => {
+      setControllerModifiedCounter(controllerModifiedCounter + 1);
+      updateTitle();
+      updateDrawButtons();
+    };
+    const fullGameEventHandler = () => {
+      updateTitle();
+    };
+    gameAreaController.addListener('gameEnd', gameEndEventHandler);
+    gameAreaController.addListener('gameUpdated', gameUpdatedEventHandler);
     gameAreaController.addListener('turnChanged', turnChangedEventHandler);
     gameAreaController.addListener('boardChanged', boardChangedEventHandler);
-    gameAreaController.addListener('drawOffered', boardChangedEventHandler);
+    gameAreaController.addListener('drawOffered', drawOfferedEventHandler);
+    gameAreaController.addListener('fullGame', fullGameEventHandler);
+    gameAreaController.addListener('drawOffered', drawOfferedEventHandler);
     return function removedListeners() {
       gameAreaController.removeListener('turnChanged', turnChangedEventHandler);
       gameAreaController.removeListener('boardChanged', boardChangedEventHandler);
-      gameAreaController.removeListener('drawOffered', boardChangedEventHandler);
+      gameAreaController.removeListener('drawOffered', drawOfferedEventHandler);
+      gameAreaController.removeListener('gameEnd', gameEndEventHandler);
+      gameAreaController.removeListener('gameUpdated', gameUpdatedEventHandler);
+      gameAreaController.removeListener('fullGame', fullGameEventHandler);
+      gameAreaController.removeListener('drawOffered', drawOfferedEventHandler);
     };
-  }, [gameAreaController]);
-  const townController = useTownController();
-  let opponent: string | undefined;
+  }, [
+    controllerModifiedCounter,
+    displayToast,
+    gameAreaController,
+    props,
+    titleMessage,
+    townController.ourPlayer.id,
+    updateDrawButtons,
+    updateTitle,
+  ]);
 
-  if (gameAreaController.status === 'IN_PROGRESS') {
-    if (gameAreaController.white?.id === townController.ourPlayer.id) {
-      opponent = gameAreaController.black?.userName;
-    } else {
-      opponent = gameAreaController.white?.userName;
-    }
-  }
-  // const diaplayToast = useToast();
   return (
     <>
       <Container color='#134f5cff' background={`url('/assets/397848.jpg') no-repeat center/cover`}>
         <Box marginTop='5%' as='header' textAlign='center' mb={4} color='red'>
           <strong>
-            <h1>You VS {opponent}</h1>
+            <h1> {titleMessage} </h1>
           </strong>
         </Box>
         <StyledChessBoard justifyContent='center'>
@@ -99,18 +171,176 @@ export default function Multiplayer(props: {
                 return (
                   <StyledChessSquare
                     id={`${rowIndex},${colIndex}`}
-                    background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
-                    onClick={async () => {}}
-                    isDisabled={false}
+                    display='flex'
+                    background={`url('/assets/chessPieces/${color}_${type}.png') center/contain no-repeat`}
+                    onClick={async () => {
+                      console.log(`${rowIndex},${colIndex}`);
+                      console.log(cell);
+                      console.log(ourTurn);
+                      console.log(possibleMovesCell);
+                      console.log(possibleMoves);
+                      console.log(gameAreaController.status);
+                      console.log(
+                        possibleMoves.find(
+                          move => move.rowIndex === rowIndex && move.colIndex === colIndex,
+                        ),
+                      );
+                      console.log('into logic');
+                      if (ourTurn) {
+                        if (
+                          possibleMovesCell.sourceColIndex !== undefined &&
+                          possibleMovesCell.sourceRowIndex !== undefined &&
+                          possibleMoves.find(
+                            move => move.rowIndex === rowIndex && move.colIndex === colIndex,
+                          )
+                        ) {
+                          console.log(`make move: ${rowIndex},${colIndex}`);
+                          try {
+                            await gameAreaController.makeMove(
+                              possibleMovesCell.sourceRowIndex,
+                              possibleMovesCell.sourceColIndex,
+                              rowIndex,
+                              colIndex,
+                            );
+                            console.log(
+                              possibleMovesCell.sourceRowIndex,
+                              possibleMovesCell.sourceColIndex,
+                              rowIndex,
+                              colIndex,
+                            );
+                          } catch (e) {
+                            displayToast({
+                              title: 'Move Error',
+                              description: `Error: ${(e as Error).message}`,
+                              status: 'error',
+                            });
+                          }
+                          setPossibleMovesCell({
+                            sourceRowIndex: undefined,
+                            sourceColIndex: undefined,
+                          });
+                          setPossibeMoves([]);
+                        } else if (
+                          possibleMovesCell.sourceColIndex &&
+                          possibleMovesCell.sourceRowIndex &&
+                          possibleMovesCell.sourceColIndex === colIndex &&
+                          possibleMovesCell.sourceRowIndex === rowIndex
+                        ) {
+                          setPossibleMovesCell({
+                            sourceRowIndex: undefined,
+                            sourceColIndex: undefined,
+                          });
+                          setPossibeMoves([]);
+                        } else if (
+                          ((possibleMovesCell.sourceColIndex === undefined &&
+                            possibleMovesCell.sourceRowIndex === undefined) ||
+                            !possibleMoves.find(
+                              move => move.rowIndex === rowIndex && move.colIndex === colIndex,
+                            )) &&
+                          cell !== undefined &&
+                          cell.piece.pieceColor === gameAreaController.gamePiece
+                        ) {
+                          console.log(`start piece: ${rowIndex},${colIndex}`);
+                          await gameAreaController
+                            .possibleMoves(rowIndex, colIndex)
+                            .then(moves => {
+                              setPossibeMoves(moves);
+                              console.log(moves);
+                            })
+                            .then(() =>
+                              setPossibleMovesCell({
+                                sourceRowIndex: rowIndex,
+                                sourceColIndex: colIndex,
+                              }),
+                            )
+                            .catch(e => {
+                              setPossibleMovesCell({
+                                sourceRowIndex: undefined,
+                                sourceColIndex: undefined,
+                              });
+                              displayToast({
+                                title: 'Possible Moves Failed',
+                                description: `Error: ${(e as Error).message}`,
+                                status: 'error',
+                              });
+                            });
+                        }
+                      }
+                    }}
+                    isDisabled={!ourTurn}
                     key={colIndex}
                     bgColor={squareColor}
                     opacity='1'
-                    aria-label={`Cell ${rowIndex},${colIndex}`}></StyledChessSquare>
+                    aria-label={`Cell ${rowIndex},${colIndex}`}>
+                    {possibleMoves.find(
+                      move => move.rowIndex === rowIndex && move.colIndex === colIndex,
+                    ) ? (
+                      <Box
+                        boxSize='10px'
+                        display='flex'
+                        background={`url('/assets/chessPieces/moveDot.png') center/cover`}>
+                        {' '}
+                      </Box>
+                    ) : (
+                      <></>
+                    )}
+                  </StyledChessSquare>
                 );
               })}
             </StyledChessRow>
           ))}
         </StyledChessBoard>
+        <ButtonGroup display='flex' mt={4} justifyContent='space-between' paddingBottom={'10px'}>
+          <Button
+            bg='green'
+            color='white'
+            onClick={() => {
+              gameAreaController.leaveGame();
+            }}
+            variant='outline'>
+            Home Screen
+          </Button>
+          <Button
+            bg='green'
+            color='red'
+            onClick={() => {
+              gameAreaController.leaveGame();
+            }}
+            variant='outline'>
+            Resign
+          </Button>
+          <Button
+            bg='blue'
+            color='white'
+            disabled={drawOfferSent}
+            onClick={async () => {
+              await gameAreaController.drawCommand('offer');
+              setDrawOfferSent(true);
+            }}
+            variant='outline'>
+            Offer Draw
+          </Button>
+          <Button
+            bg='blue'
+            color='white'
+            disabled={!drawOffered}
+            onClick={async () => {
+              await gameAreaController.drawCommand('accept');
+            }}
+            variant='outline'>
+            Accept Draw
+          </Button>
+          <Button
+            bg='blue'
+            color='white'
+            disabled={!drawOffered}
+            onClick={async () => {
+              await gameAreaController.drawCommand('reject');
+            }}
+            variant='outline'>
+            Reject Draw
+          </Button>
+        </ButtonGroup>
       </Container>
     </>
   );
