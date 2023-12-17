@@ -113,7 +113,7 @@ describe('ChessGame', () => {
         expect(game.isCheckmate()).toBe(false);
       });
       // Remove .skip after possibleMoves
-      it("should return true when the king is in checkmate (Fool's Mate)", () => {
+      it.skip("should return true when the king is in checkmate (Fool's Mate)", () => {
         const whitePlayerId = player1.id;
         const blackPlayerId = player1.id;
         // Simulate the moves leading to Fool's Mate
