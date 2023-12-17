@@ -1370,7 +1370,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   }
 
   public printBoard() {
-    let board: Readonly<ChessCell[][]>;
+    const board: Readonly<ChessCell[][]>;
     board = this.state.board;
     const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     // Start with the top border
