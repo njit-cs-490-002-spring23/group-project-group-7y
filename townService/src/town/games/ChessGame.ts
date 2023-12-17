@@ -1179,7 +1179,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         return false;
       }
     }
-    this.printBoard();
     return true;
   }
 
@@ -1369,33 +1368,33 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return false;
   }
 
-  public printBoard() {
-    const board: Readonly<ChessCell[][]>;
-    board = this.state.board;
-    const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    // Start with the top border
-    let boardString = `  ${fileLabels.join(' ')}\n`;
+  // public printBoard() {
+  //   let board: Readonly<ChessCell[][]>;
+  //   board = this.state.board;
+  //   const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  //   // Start with the top border
+  //   let boardString = `  ${fileLabels.join(' ')}\n`;
 
-    for (let rank = 0; rank < 8; rank++) {
-      // Add the rank label
-      boardString += `${rank} `;
+  //   for (let rank = 0; rank < 8; rank++) {
+  //     // Add the rank label
+  //     boardString += `${rank} `;
 
-      for (let file = 0; file < 8; file++) {
-        const cell = board[rank][file];
-        // Add the piece type or a dot if the cell is empty
-        boardString += `${cell && cell.piece ? cell.piece.pieceType : '.'} `;
-      }
+  //     for (let file = 0; file < 8; file++) {
+  //       const cell = board[rank][file];
+  //       // Add the piece type or a dot if the cell is empty
+  //       boardString += `${cell && cell.piece ? cell.piece.pieceType : '.'} `;
+  //     }
 
-      // End the line after each rank
-      boardString += `${rank}\n`;
-    }
+  //     // End the line after each rank
+  //     boardString += `${rank}\n`;
+  //   }
 
-    // End with the bottom border
-    boardString += `  ${fileLabels.join(' ')}\n`;
+  //   // End with the bottom border
+  //   boardString += `  ${fileLabels.join(' ')}\n`;
 
-    // eslint-disable-next-line no-console
-    console.log(boardString);
-  }
+  //   // eslint-disable-next-line no-console
+  //   console.log(boardString);
+  // }
 
   /**
    * Returns whether a certain player is in check
