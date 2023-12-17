@@ -285,7 +285,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @returns {ChesMove[]}
    */
   public boardPossibleMoves(rowIndex: number, colIndex: number) {
-    log('moves query for: %d, %d', rowIndex, colIndex);
     return this.possibleMoves(this._rowToRank(rowIndex), this._columnToFile(colIndex));
   }
 
@@ -479,16 +478,12 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           if (path.color === chessSquare.piece.pieceColor) {
             const pawanMoveRowIndex = rowIndex + path.row;
             const pawnMoveColIndex = colIndex + path.col;
-            /* const p: ChessMove = {
-              gamePiece: chessSquare.piece,
-              currentRank: rank,
-              currentFile: file,
-              destinationFile: this._columnToFile(pawnMoveColIndex),
-              destinationRank: this._rowToRank(pawanMoveRowIndex),
-            };
-            possibleMoves.push(p); */
             if (this._validIndex(pawanMoveRowIndex, pawnMoveColIndex)) {
-              if (path.type === 'F' && chessSquare.piece.moved === false) {
+              if (
+                path.type === 'F' &&
+                chessSquare.piece.moved === false &&
+                board[pawanMoveRowIndex][pawnMoveColIndex] === undefined
+              ) {
                 const possibleMove: ChessMove = {
                   gamePiece: chessSquare.piece,
                   currentRank: rank,
@@ -587,7 +582,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       this.state.moves = updateValidMovesToGameState;
 
       // updates the state of the board with the new position and sets the old position to undefined1
-      this.state.board[_move.move.destinationRank - 1][
+      this.state.board[this._rowToRank(_move.move.destinationRank)][
         this._fileToIndex(_move.move.destinationFile)
       ] = {
         piece: {
@@ -596,8 +591,9 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           moved: true,
         },
       };
-      this.state.board[_move.move.currentRank - 1][this._fileToIndex(_move.move.currentFile)] =
-        undefined;
+      this.state.board[this._rowToRank(_move.move.currentRank)][
+        this._fileToIndex(_move.move.currentFile)
+      ] = undefined;
     } else {
       throw new InvalidParametersError('Invalid Move');
     }
@@ -647,8 +643,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const maximumValueForBoard = 7;
 
     const chessPiece = move.move.gamePiece.pieceType;
-    const currInRank = move.move.currentRank - shiftNeededForBoardArray;
-    const destToRank = move.move.destinationRank - shiftNeededForBoardArray;
+    const currInRank = this._rowToRank(move.move.currentRank);
+    const destToRank = this._rowToRank(move.move.destinationRank);
     const chessPieceColor = move.move.gamePiece.pieceColor;
     const destFileNumber = this._fileToIndex(move.move.destinationFile);
     const currFileNumber = this._fileToIndex(move.move.currentFile);
@@ -691,8 +687,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       case 'P':
         // Checks to see if pawn's initial move is by 2
         if (
-          (currInRank === 1 && destToRank === currInRank + 2 && playerColor === 'W') ||
-          (currInRank === 6 && destToRank === currInRank - 2 && playerColor === 'B')
+          (currInRank === 6 && destToRank === currInRank - 2 && playerColor === 'W') ||
+          (currInRank === 1 && destToRank === currInRank + 2 && playerColor === 'B')
         ) {
           // if file changes the move is invalid
           if (destFileNumber !== currFileNumber) {
@@ -715,10 +711,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
 
           return false;
         }
+
         // regular pawn movement by 1
         if (
-          (destToRank === currInRank + 1 && playerColor === 'W') ||
-          (destToRank === currInRank - 1 && playerColor === 'B')
+          (destToRank === currInRank - 1 && playerColor === 'W') ||
+          (destToRank === currInRank + 1 && playerColor === 'B')
         ) {
           result = this._checkChessCells(
             currInRank,
@@ -1000,16 +997,15 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           updatedCell = {
             piece: move.gamePiece,
           };
+          updatedBoard[i][j] = { piece: move.gamePiece };
+        } else if (
+          i === this._rankToRow(move.currentRank) &&
+          j === this._fileToColumn(move.currentFile)
+        ) {
+          updatedBoard[i][j] = undefined;
           updatedBoard[i][j] = updatedCell;
-        } else if (currentCell) {
-          updatedCell = {
-            piece: {
-              pieceType: currentCell.piece.pieceType,
-              pieceColor: currentCell.piece.pieceColor,
-              moved: true,
-            },
-          };
-          updatedBoard[i][j] = updatedCell;
+        } else {
+          updatedBoard[i][j] = this.state.board[i][j];
         }
       }
     }
@@ -1075,18 +1071,17 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         board[this._rankToRow(rank)][this._fileToColumn(file)] = cell;
       }
     });
-
     this.state.board = board as ReadonlyArray<ChessCell[]>;
   }
 
   protected _getKingPosition(color: 'W' | 'B'): ChessPosition {
-    for (let rank = 1; rank <= 8; rank++) {
+    for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
       for (const fileKey of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
         const fileIndex = this._fileToIndex(fileKey as ChessFilePosition);
-        const piece = this.state.board[rank - 1][fileIndex];
+        const piece = this.state.board[rankIndex][fileIndex];
         if (piece?.piece.pieceType === 'K' && piece?.piece.pieceColor === color) {
           return {
-            rank: rank as ChessRankPosition,
+            rank: (rankIndex + 1) as ChessRankPosition,
             file: fileKey as ChessFilePosition,
           };
         }
@@ -1164,11 +1159,9 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
   public isCheckmate(): boolean {
     // Determine the current player's color
     const currentPlayerColor = this.state.moves.length % 2 === 0 ? 'W' : 'B';
-
     if (!this.isKingInCheck(currentPlayerColor)) {
       return false;
     }
-
     const allPossibleMoves = this._getAllPossibleMoves(currentPlayerColor);
 
     // Test each move to see if it can take the king out of check
@@ -1179,7 +1172,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       this.updateChessBoard(move);
 
       const stillInCheck = this.isKingInCheck(currentPlayerColor);
-
       // Restore the original state
       this.state = originalState;
       // If the king is not in check after this move, it's not checkmate
@@ -1187,7 +1179,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         return false;
       }
     }
-    // If no move gets the king out of check, it's checkmate
     return true;
   }
 
@@ -1377,21 +1368,49 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return false;
   }
 
+  // public printBoard() {
+  //   let board: Readonly<ChessCell[][]>;
+  //   board = this.state.board;
+  //   const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  //   // Start with the top border
+  //   let boardString = `  ${fileLabels.join(' ')}\n`;
+
+  //   for (let rank = 0; rank < 8; rank++) {
+  //     // Add the rank label
+  //     boardString += `${rank} `;
+
+  //     for (let file = 0; file < 8; file++) {
+  //       const cell = board[rank][file];
+  //       // Add the piece type or a dot if the cell is empty
+  //       boardString += `${cell && cell.piece ? cell.piece.pieceType : '.'} `;
+  //     }
+
+  //     // End the line after each rank
+  //     boardString += `${rank}\n`;
+  //   }
+
+  //   // End with the bottom border
+  //   boardString += `  ${fileLabels.join(' ')}\n`;
+
+  //   // eslint-disable-next-line no-console
+  //   console.log(boardString);
+  // }
+
   /**
    * Returns whether a certain player is in check
    *
    * @param player the player to check if in check
    */
-  public isKingInCheck(player: PlayerID, tempBoard?: ChessCell[][]) {
+  public isKingInCheck(player: 'W' | 'B', tempBoard?: ChessCell[][]) {
     let board: Readonly<ChessCell[][]>;
     if (tempBoard) {
       board = tempBoard;
     } else {
       board = this.state.board;
     }
-    const playerColor = this._playerColor(player);
+    const playerColor = player;
     const kingLocation = this._getKingPosition(playerColor);
-    const kingRow = this._rankToRow(kingLocation.rank);
+    const kingRow = kingLocation.rank - 1;
     const colIndex = this._fileToColumn(kingLocation.file);
 
     // check king is not checked by a pawn
@@ -1443,7 +1462,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     for (let i = 0; i < knightMoves.length; i++) {
       const knightMove = knightMoves[i];
       const checkRowIndex = kingRow + knightMove.row;
-      const checkColIndex = kingRow + knightMove.col;
+      const checkColIndex = colIndex + knightMove.col;
       if (this._validIndex(checkRowIndex, checkColIndex)) {
         if (
           board[checkRowIndex][checkColIndex] &&
@@ -1461,48 +1480,36 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       { row: -1, col: -1, type: 'D' },
       { row: 1, col: 1, type: 'D' },
       { row: 1, col: -1, type: 'D' },
-      { row: -1, col: 0, type: 'L' },
-      { row: 1, col: 0, type: 'L' },
-      { row: 0, col: 1, type: 'L' },
-      { row: 0, col: -1, type: 'L' },
+      { row: -1, col: 0, type: 'H' },
+      { row: 1, col: 0, type: 'H' },
+      { row: 0, col: 1, type: 'H' },
+      { row: 0, col: -1, type: 'H' },
     ];
+
     for (let i = 0; i < initialPaths.length; i++) {
-      const initialPath = initialPaths[i];
-      let checkRowIndex = kingRow + initialPath.row;
-      let checkColIndex = kingRow + initialPath.col;
-      while (this._validIndex(checkRowIndex, checkColIndex)) {
-        if (
-          board[checkRowIndex][checkColIndex] &&
-          board[checkRowIndex][checkColIndex]?.piece.pieceColor === playerColor
-        ) {
-          break;
-        }
-        if (
-          board[checkRowIndex][checkColIndex] &&
-          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
-          initialPath.type === 'D'
-        ) {
-          if (
-            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'B' ||
-            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
-          ) {
+      const path = initialPaths[i];
+      let checkRow = kingRow + path.row;
+      let checkCol = colIndex + path.col;
+
+      while (this._validIndex(checkRow, checkCol)) {
+        const cell = board[checkRow][checkCol];
+        if (cell && cell.piece) {
+          if (cell.piece.pieceColor === playerColor) {
+            break;
+          }
+
+          const isDiagonalPath = path.type === 'D';
+          const isHorizontalPath = path.type === 'H';
+          const isBishopOrQueen = cell.piece.pieceType === 'B' || cell.piece.pieceType === 'Q';
+          const isRookOrQueen = cell.piece.pieceType === 'R' || cell.piece.pieceType === 'Q';
+
+          if ((isDiagonalPath && isBishopOrQueen) || (isHorizontalPath && isRookOrQueen)) {
             return true;
           }
         }
-        if (
-          board[checkRowIndex][checkColIndex] &&
-          board[checkRowIndex][checkColIndex]?.piece.pieceColor !== playerColor &&
-          initialPath.type === 'H'
-        ) {
-          if (
-            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'R' ||
-            board[checkRowIndex][checkColIndex]?.piece.pieceType === 'Q'
-          ) {
-            return true;
-          }
-        }
-        checkRowIndex += initialPath.row;
-        checkColIndex += initialPath.col;
+
+        checkRow += path.row;
+        checkCol += path.col;
       }
     }
     return false;

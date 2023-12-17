@@ -16,12 +16,14 @@ describe('ChessGame', () => {
   describe('board', () => {
     it.skip('should initialize with the correct starting positions', () => {
       const { board } = game.state;
-      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at A1
-      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // White rook at H1
-      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // Black rook at A8
-      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // Black rook at H8
-      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'B', moved: false } }); // White Pawn at B2
-      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W', moved: false } }); // Black Pawn at G7
+      expect(board[0][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // Black rook at A1
+      expect(board[0][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'B', moved: false } }); // Black rook at H1
+      expect(board[0][4]).toEqual({ piece: { pieceType: 'K', pieceColor: 'B', moved: false } }); // Black King at E8
+      expect(board[7][4]).toEqual({ piece: { pieceType: 'K', pieceColor: 'W', moved: false } }); // White King at E1
+      expect(board[7][0]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // White rook at A8
+      expect(board[7][7]).toEqual({ piece: { pieceType: 'R', pieceColor: 'W', moved: false } }); // White rook at H8
+      expect(board[1][1]).toEqual({ piece: { pieceType: 'P', pieceColor: 'B', moved: false } }); // Black Pawn at B2
+      expect(board[6][6]).toEqual({ piece: { pieceType: 'P', pieceColor: 'W', moved: false } }); // White Pawn at G7
     });
   });
   describe('_join', () => {
@@ -103,19 +105,17 @@ describe('ChessGame', () => {
     beforeEach(() => {
       player1 = createPlayerForTesting();
       player2 = createPlayerForTesting();
+      game = new ChessGame();
       game.join(player1);
       game.join(player2);
     });
     describe('isCheckmate', () => {
-      // Remove .skip after possibleMoves
-      it.skip('should return false if the king is not in checkmate (e.g., starting position)', () => {
-        game = new ChessGame();
+      it('should return false if the king is not in checkmate (e.g., starting position)', () => {
         expect(game.isCheckmate()).toBe(false);
       });
-      // Remove .skip after possibleMoves
-      it.skip("should return true when the king is in checkmate (Fool's Mate)", () => {
+      it("should return true when the king is in checkmate (Fool's Mate)", () => {
         const whitePlayerId = player1.id;
-        const blackPlayerId = player1.id;
+        const blackPlayerId = player2.id;
         // Simulate the moves leading to Fool's Mate
         game.applyMove({
           playerID: whitePlayerId,
@@ -155,7 +155,7 @@ describe('ChessGame', () => {
           move: {
             gamePiece: { pieceType: 'Q', pieceColor: 'B', moved: true },
             currentRank: 8,
-            currentFile: 'h',
+            currentFile: 'd',
             destinationRank: 4,
             destinationFile: 'h',
           },
@@ -183,10 +183,10 @@ describe('ChessGame', () => {
     });
     describe('isKingInCheck', () => {
       it.skip('should return false if the white king is not in check', () => {
-        expect(game.isKingInCheck(player1.id)).toBe(false);
+        expect(game.isKingInCheck('W')).toBe(false);
       });
       it.skip('should return false if the black king is not in check', () => {
-        expect(game.isKingInCheck(player2.id)).toBe(false);
+        expect(game.isKingInCheck('B')).toBe(false);
       });
     });
 
