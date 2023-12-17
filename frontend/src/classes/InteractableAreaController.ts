@@ -78,6 +78,7 @@ export default abstract class InteractableAreaController<
     event: E,
     ...args: Parameters<EmittedEventType[E]>
   ): boolean {
+    console.log(event);
     const listeners = this._listeners.get(event) ?? [];
     listeners.forEach(listener => listener(...args));
     return true;

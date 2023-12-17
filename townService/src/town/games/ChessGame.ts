@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { fetchMiddlewares } from 'tsoa';
 import axios from 'axios';
+import { log } from 'node:console';
 import {
   ChessGameState,
   ChessMove,
@@ -22,6 +23,7 @@ import { databaseUpdate } from './database/chessDatabase';
 import Game from './Game';
 import InvalidParametersError, {
   GAME_FULL_MESSAGE,
+  GAME_NOT_IN_PROGRESS_MESSAGE,
   PLAYER_ALREADY_IN_GAME_MESSAGE,
   PLAYER_NOT_IN_GAME_MESSAGE,
 } from '../../lib/InvalidParametersError';
@@ -190,7 +192,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @throws APIConnectionError if cannot acces the API
    */
   public async nextBestMove(): Promise<ChessMove> {
-    const apiEndpoint = 'https://stockfish.online/api/stockfish.php';
+    const apiEndpoint = 'https://stockfish.blacknline/api/stockfish.php';
     const requestURL = `${apiEndpoint}?fen=${encodeURIComponent(
       this.fenNotation(),
     )}&depth=10&mode=bestmove`;
@@ -926,32 +928,54 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * @throws InvalidParametersError if the player is not in the game (PLAYER_NOT_IN_GAME_MESSAGE)
    */
   protected _leave(player: Player): void {
-    if (this.state.white !== player.id && this.state.black !== player.id) {
+    if (!this._hasPlayer(player.id)) {
       throw new InvalidParametersError(PLAYER_NOT_IN_GAME_MESSAGE);
+    } else if (this._fullGame() && this.state.status === 'IN_PROGRESS') {
+      this.state.status = 'OVER';
+      if (this.state.white === player.id) {
+        this.state.winner = this.state.black;
+      } else this.state.winner = this.state.white;
+      this.updateLeaderBoard();
+    } else if (this._onlyOnePlayer()) {
+      this.state.status = 'WAITING_TO_START';
+      this.state.white = undefined;
     }
-    // Handles case where the game has not started yet
-    if (this.state.black === undefined) {
-      this.state = {
-        board: [[]],
-        moves: [],
-        status: 'WAITING_TO_START',
-        halfMoves: 0,
-      };
-      return;
+  }
+
+  /**
+   * Decides and returns whether the game is full with two players
+   *
+   * @returns boolean true if there are two players in the game
+   */
+  private _fullGame(): boolean {
+    if (this.state.white && this.state.black) return true;
+    return false;
+  }
+
+  /**
+   * Decides and returs whether or not there is only one player in the game, meaing a partial game
+   *
+   * @returns boolean true if there is only one, x player or false is not
+   */
+  public _onlyOnePlayer(): boolean {
+    if (this.state.white && !this.state.black) return true;
+    return false;
+  }
+
+  /**
+   * Decides and returs whether or not if a player is in the game state
+   *
+   * @param playerID the id of the player
+   * @returns boolean true if a player is already present in the game or else false
+   */
+  private _hasPlayer(playerID: string): boolean {
+    let playerPresentInGame = false;
+    if (this.state.white && this.state.white === playerID) {
+      playerPresentInGame = true;
+    } else if (this.state.black && this.state.black === playerID) {
+      playerPresentInGame = true;
     }
-    if (this.state.white === player.id) {
-      this.state = {
-        ...this.state,
-        status: 'OVER',
-        winner: this.state.black,
-      };
-    } else {
-      this.state = {
-        ...this.state,
-        status: 'OVER',
-        winner: this.state.white,
-      };
-    }
+    return playerPresentInGame;
   }
 
   /**
@@ -1676,5 +1700,43 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
 
     // Update the game history in the database
     await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON, updatedMoveNamesJSON);
+  }
+
+  /**
+   * Logic for updated state based on draw offer, accept and reject
+   * @param message
+   * @param player
+   */
+  public drawGame(message: string, player: Player) {
+    if (this.state.status === 'IN_PROGRESS') {
+      if (message === 'offer') {
+        if (this.state.drawOffer && this.state.drawOffer !== player.id) {
+          this.state.drawAccept = player.id;
+          this.state.winner = undefined;
+          this.state.status = 'OVER';
+          this.updateLeaderBoard();
+        } else {
+          this.state.drawOffer = player.id;
+        }
+      } else if (
+        message === 'accept' &&
+        this.state.drawOffer &&
+        this.state.drawOffer !== player.id
+      ) {
+        this.state.drawAccept = player.id;
+        this.state.winner = undefined;
+        this.state.status = 'OVER';
+        this.updateLeaderBoard();
+      } else if (
+        message === 'reject' &&
+        this.state.drawOffer &&
+        this.state.drawOffer !== player.id
+      ) {
+        this.state.drawOffer = undefined;
+        this.state.drawAccept = undefined;
+      }
+    } else {
+      throw new InvalidParametersError(GAME_NOT_IN_PROGRESS_MESSAGE);
+    }
   }
 }
