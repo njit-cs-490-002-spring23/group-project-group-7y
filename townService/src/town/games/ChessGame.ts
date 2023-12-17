@@ -938,7 +938,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       if (this.state.white === player.id) {
         this.state.winner = this.state.black;
       } else this.state.winner = this.state.white;
-      this.updateLeaderBoard()
+      this.updateLeaderBoard();
     } else if (this._onlyOnePlayer()) {
       this.state.status = 'WAITING_TO_START';
       this.state.white = undefined;

@@ -1,4 +1,3 @@
-import { log } from 'node:console';
 import Player from '../lib/Player';
 import {
   BoundingBox,
