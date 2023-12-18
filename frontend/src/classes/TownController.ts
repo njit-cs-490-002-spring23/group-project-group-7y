@@ -438,8 +438,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * events (@see ViewingAreaController and @see ConversationAreaController)
      */
     this._socket.on('interactableUpdate', interactable => {
-      console.log('interactableUpdate');
-      console.log(interactable);
       if (interactable.type === 'ChessArea') {
         const updatedGameArea = this._gameAreas.find(eachArea => eachArea.id === interactable.id);
         updatedGameArea?.updateFrom(interactable, this._playersByIDs(interactable.occupantsByID));

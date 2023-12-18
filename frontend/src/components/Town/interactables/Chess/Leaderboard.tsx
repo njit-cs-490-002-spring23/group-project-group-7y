@@ -48,8 +48,6 @@ export default function Leaderboard(props: {
   }, [gameAreaController, props]);
   useEffect(() => {
     fetchLeaderboard().then((updateLeaderboard: React.SetStateAction<LeaderboardRow[]>) => {
-      console.log('leaderboard');
-      console.log(updateLeaderboard);
       setLeaderBoard(updateLeaderboard);
     });
   }, []);

@@ -6,7 +6,6 @@ import ChessAreaController from '../../../../classes/interactable/ChessAreaContr
 import useTownController from '../../../../hooks/useTownController';
 import { fetchLeaderboard } from '../../../../services/gameService';
 import { LeaderboardRow } from './Leaderboard';
-import MainMenu from './MainMenu';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessRow = chakra(Box, {
@@ -60,7 +59,7 @@ export default function Multiplayer(props: {
   const [gameBoard, setBoard] = useState(gameAreaController.board);
   const [ourTurn, setOurTurn] = useState(gameAreaController.isOurTurn);
   const [drawOffered, setDrawOffered] = useState(false);
-  const [drawOfferSent, setDrawOfferSent] = useState(false);
+  const [, setDrawOfferSent] = useState(false);
   const [titleMessage, setTitleMessage] = useState<string>('Waiting For Second Player ...');
   const [possibleMovesCell, setPossibleMovesCell] = useState<{
     sourceRowIndex: number | undefined;
@@ -120,8 +119,6 @@ export default function Multiplayer(props: {
   };
   useEffect(() => {
     fetchLeaderboard().then((updateLeaderboard: React.SetStateAction<LeaderboardRow[]>) => {
-      console.log('leaderboard');
-      console.log(updateLeaderboard);
       setLeaderBoard(updateLeaderboard);
     });
     function turnChangedEventHandler(turn: boolean) {

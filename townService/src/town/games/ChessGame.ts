@@ -1457,34 +1457,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return false;
   }
 
-  // public printBoard() {
-  //   let board: Readonly<ChessCell[][]>;
-  //   board = this.state.board;
-  //   const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  //   // Start with the top border
-  //   let boardString = `  ${fileLabels.join(' ')}\n`;
-
-  //   for (let rank = 0; rank < 8; rank++) {
-  //     // Add the rank label
-  //     boardString += `${rank} `;
-
-  //     for (let file = 0; file < 8; file++) {
-  //       const cell = board[rank][file];
-  //       // Add the piece type or a dot if the cell is empty
-  //       boardString += `${cell && cell.piece ? cell.piece.pieceType : '.'} `;
-  //     }
-
-  //     // End the line after each rank
-  //     boardString += `${rank}\n`;
-  //   }
-
-  //   // End with the bottom border
-  //   boardString += `  ${fileLabels.join(' ')}\n`;
-
-  //   // eslint-disable-next-line no-console
-  //   console.log(boardString);
-  // }
-
   /**
    * Returns whether a certain player is in check
    *
@@ -1721,7 +1693,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
    */
   public async updateLeaderBoard() {
-    console.log('Updating Leaderboard');
     let winPlayer1 = 0;
     let winPlayer2 = 0;
     let lossPlayer1 = 0;
@@ -1754,8 +1725,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
         }
       })
-      .catch(error => {
-        console.error('Error fetching leaderboard row:', error);
+      .catch(() => {
+        throw new InvalidParametersError('Error fetching leaderboard row:');
       });
 
     await databaseUpdate
@@ -1782,9 +1753,8 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         }
       })
       .catch(error => {
-        console.error('Error fetching leaderboard row:', error);
+        throw new InvalidParametersError('Error fetching leaderboard row:');
       });
-    console.log(result);
   }
 
   /**

@@ -4,7 +4,6 @@ import {
   ChessGameState,
   ChessCell,
   ChessFilePosition,
-  ChessPiece,
   ChessRankPosition,
   BoardLocation,
   PlayerID,
