@@ -96,7 +96,6 @@ export default function Multiplayer(props: {
       setOurTurn(turn);
     }
     function boardChangedEventHandler(board: ChessCell[][]) {
-      console.log('changing board');
       setBoard(board);
     }
     function drawOfferedEventHandler() {
@@ -173,18 +172,6 @@ export default function Multiplayer(props: {
                     display='flex'
                     background={`url('/assets/chessPieces/${color}_${type}.png') center/contain no-repeat`}
                     onClick={async () => {
-                      console.log(`${rowIndex},${colIndex}`);
-                      console.log(cell);
-                      console.log(ourTurn);
-                      console.log(possibleMovesCell);
-                      console.log(possibleMoves);
-                      console.log(gameAreaController.status);
-                      console.log(
-                        possibleMoves.find(
-                          move => move.rowIndex === rowIndex && move.colIndex === colIndex,
-                        ),
-                      );
-                      console.log('into logic');
                       if (ourTurn) {
                         if (
                           possibleMovesCell.sourceColIndex !== undefined &&
@@ -193,15 +180,8 @@ export default function Multiplayer(props: {
                             move => move.rowIndex === rowIndex && move.colIndex === colIndex,
                           )
                         ) {
-                          console.log(`make move: ${rowIndex},${colIndex}`);
                           try {
                             await gameAreaController.makeMove(
-                              possibleMovesCell.sourceRowIndex,
-                              possibleMovesCell.sourceColIndex,
-                              rowIndex,
-                              colIndex,
-                            );
-                            console.log(
                               possibleMovesCell.sourceRowIndex,
                               possibleMovesCell.sourceColIndex,
                               rowIndex,
@@ -239,12 +219,10 @@ export default function Multiplayer(props: {
                           cell !== undefined &&
                           cell.piece.pieceColor === gameAreaController.gamePiece
                         ) {
-                          console.log(`start piece: ${rowIndex},${colIndex}`);
                           await gameAreaController
                             .possibleMoves(rowIndex, colIndex)
                             .then(moves => {
                               setPossibeMoves(moves);
-                              console.log(moves);
                             })
                             .then(() =>
                               setPossibleMovesCell({
