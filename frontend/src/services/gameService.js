@@ -13,3 +13,15 @@ export const fetchAllGames = async () => {
     console.error('There was a problem fetching game data:', error);
   }
 };
+
+export const fetchLeaderboard = async () => {
+  try {
+    const response = await fetch(`${API_URL}/leaderboard`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('There was a problem fetching leaderboard:', error);
+  }
+};

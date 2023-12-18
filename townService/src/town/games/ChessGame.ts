@@ -16,6 +16,7 @@ import {
   GameMove,
   ChessPosition,
   PieceWithPosition,
+  LeaderBoardRow,
 } from '../../types/CoveyTownSocket';
 import Player from '../../lib/Player';
 
@@ -258,6 +259,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           destinationRank: this._rowToRank(moveRowIndex),
         };
         possibleMoves.push(possibleMove);
+        break;
       } else if (board[moveRowIndex][moveColIndex]?.piece.pieceColor === gamePiece.pieceColor) {
         break;
       }
@@ -265,7 +267,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         break;
       }
       moveRowIndex += rowDisplacement;
-      moveColIndex += rowDisplacement;
+      moveColIndex += colDisplacement;
     }
   }
 
@@ -547,7 +549,76 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         return [];
       }
     }
-    return possibleMoves;
+    const checkCheckedMoves = [];
+    for (let i = 0; i < possibleMoves.length; i++) {
+      const tempBoard1 = this._applyMoveToTemporaryBoard(possibleMoves[i]);
+      if (!this.isKingInCheck(possibleMoves[i].gamePiece.pieceColor, tempBoard1)) {
+        checkCheckedMoves.push(possibleMoves[i]);
+      }
+    }
+    return checkCheckedMoves;
+  }
+
+  public multableBoard(readBoard: Readonly<ChessCell[][]>) {
+    const board: ChessCell[][] = [];
+    for (let i = 0; i < 8; i++) {
+      const row: ChessCell[] = [];
+      for (let j = 0; j < 8; j++) {
+        if (!readBoard || !readBoard[i][j] || !readBoard[i][j]?.piece) {
+          row.push(undefined);
+        } else if (readBoard && readBoard[i][j]?.piece) {
+          const cell = readBoard[i][j]?.piece;
+          if (!cell) row.push(undefined);
+          else {
+            row.push({
+              piece: {
+                pieceColor: cell.pieceColor,
+                pieceType: cell.pieceType,
+                moved: cell.moved,
+              },
+            });
+          }
+        }
+      }
+      board.push(row);
+    }
+    return board;
+  }
+
+  public constructChessNotation(move: GameMove<ChessMove>, isCapture: boolean) {
+    let notation = '';
+
+    // Add piece type, except for pawns
+    if (move.move.gamePiece.pieceType && move.move.gamePiece.pieceType !== 'P') {
+      notation += move.move.gamePiece.pieceType.charAt(0).toUpperCase();
+    }
+
+    // If the move.move is a capture, include 'x' and possibly the departing file for pawns
+    if (isCapture) {
+      if (move.move.gamePiece.pieceType === 'P') {
+        notation += move.move.currentFile;
+      }
+      notation += 'x';
+    }
+
+    // Add destination square
+    notation += move.move.destinationFile + move.move.destinationRank;
+
+    // Add promotion notation defaulting to queen
+    if (
+      move.move.gamePiece.pieceType === 'P' &&
+      (move.move.destinationRank === 1 || move.move.destinationRank === 8)
+    ) {
+      notation += '=Q';
+    }
+
+    if (this.isCheckmate()) {
+      notation += '#';
+    } else if (this.isKingInCheck(move.move.gamePiece.pieceColor)) {
+      notation += '+';
+    }
+
+    return notation;
   }
 
   /*
@@ -576,11 +647,18 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     ) {
       throw new InvalidParametersError('Not Your Turn');
     }
+    let capture = false;
     if (this._validateGamePieceMovement(_move)) {
       // updates the moves with the current game move
       const updateValidMovesToGameState = [...this.state.moves, _move.move];
       this.state.moves = updateValidMovesToGameState;
-
+      if (
+        this.state.board[this._rowToRank(_move.move.destinationRank)][
+          this._fileToIndex(_move.move.destinationFile)
+        ] !== undefined
+      ) {
+        capture = true;
+      }
       // updates the state of the board with the new position and sets the old position to undefined1
       this.state.board[this._rowToRank(_move.move.destinationRank)][
         this._fileToIndex(_move.move.destinationFile)
@@ -594,9 +672,26 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       this.state.board[this._rowToRank(_move.move.currentRank)][
         this._fileToIndex(_move.move.currentFile)
       ] = undefined;
+
+      if (this.isCheckmate()) {
+        if (_move.playerID === this.state.white) {
+          this.state.winner = this.state.white;
+          this.state.status = 'OVER';
+          this.updateLeaderBoard();
+        } else {
+          this.state.winner = this.state.black;
+          this.state.status = 'OVER';
+          this.updateLeaderBoard();
+        }
+      } else if (this.isStalemate()) {
+        this.state.winner = undefined;
+        this.state.status = 'OVER';
+        this.updateLeaderBoard();
+      }
     } else {
       throw new InvalidParametersError('Invalid Move');
     }
+    this.callUpdateGameHistory(_move.gameID, this.constructChessNotation(_move, capture));
   }
 
   // Checks if the desination and pieces on the way are empty
@@ -1182,22 +1277,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     return true;
   }
 
-  protected _applyMoveToTemporaryBoard(move: ChessMove): ChessGameState {
-    // Create a new game state object by copying the existing one
-    const tempGameState: ChessGameState = {
-      ...this.state,
-      moves: [...this.state.moves, move], // Add the new move to the end of the moves array
-    };
-
-    const tempBoard = this.state.board;
+  protected _applyMoveToTemporaryBoard(move: ChessMove): ChessCell[][] {
+    const tempBoard = this.multableBoard(this.multableBoard(this.state.board));
 
     // Translate the files to indices
     const fromFileIndex = this._fileToIndex(move.currentFile);
     const toFileIndex = this._fileToIndex(move.destinationFile);
 
     // Translate the ranks to indices
-    const fromRankIndex = move.currentRank - 1;
-    const toRankIndex = move.destinationRank - 1;
+    const fromRankIndex = this._rankToRow(move.currentRank);
+    const toRankIndex = this._rankToRow(move.destinationRank);
 
     // Get the piece being moved from the temporary board
     const piece = tempBoard[fromRankIndex][fromFileIndex];
@@ -1209,7 +1298,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     tempBoard[fromRankIndex][fromFileIndex] = undefined;
 
     // Return the updated game state
-    return tempGameState;
+    return tempBoard;
   }
 
   /**
@@ -1367,34 +1456,6 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     }
     return false;
   }
-
-  // public printBoard() {
-  //   let board: Readonly<ChessCell[][]>;
-  //   board = this.state.board;
-  //   const fileLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  //   // Start with the top border
-  //   let boardString = `  ${fileLabels.join(' ')}\n`;
-
-  //   for (let rank = 0; rank < 8; rank++) {
-  //     // Add the rank label
-  //     boardString += `${rank} `;
-
-  //     for (let file = 0; file < 8; file++) {
-  //       const cell = board[rank][file];
-  //       // Add the piece type or a dot if the cell is empty
-  //       boardString += `${cell && cell.piece ? cell.piece.pieceType : '.'} `;
-  //     }
-
-  //     // End the line after each rank
-  //     boardString += `${rank}\n`;
-  //   }
-
-  //   // End with the bottom border
-  //   boardString += `  ${fileLabels.join(' ')}\n`;
-
-  //   // eslint-disable-next-line no-console
-  //   console.log(boardString);
-  // }
 
   /**
    * Returns whether a certain player is in check
@@ -1631,74 +1692,108 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If the username of the player is not found, insert the player into the leaderboard with their username, wins, ties and losses
    * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
    */
-  public updateLeaderBoard(): void {
+  public async updateLeaderBoard() {
     let winPlayer1 = 0;
     let winPlayer2 = 0;
     let lossPlayer1 = 0;
     let lossPlayer2 = 0;
     let tiePlayer1 = 0;
     let tiePlayer2 = 0;
+    let result: LeaderBoardRow | undefined;
+    let result2: LeaderBoardRow | undefined;
 
-    const result = databaseUpdate.getLeaderBoardRow(this._players[0].userName);
-    const result2 = databaseUpdate.getLeaderBoardRow(this._players[1].userName);
+    await databaseUpdate
+      .getLeaderBoardRow(this._players[0].userName)
+      .then(row => {
+        result = row as LeaderBoardRow;
+      })
+      .then(() => {
+        if (result === undefined) {
+          if (this.state.winner === undefined && this.state.status === 'OVER') {
+            tiePlayer1 += 1;
+          } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
+            winPlayer1 += 1;
+          } else {
+            lossPlayer1 += 1;
+          }
+          databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
+        } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
+        } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
+        } else {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
+        }
+      })
+      .catch(() => {
+        throw new InvalidParametersError('Error fetching leaderboard row:');
+      });
 
-    if (result === undefined) {
-      if (this.state.winner === undefined && this.state.status === 'OVER') {
-        tiePlayer1 += 1;
-      } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
-        winPlayer1 += 1;
-      } else {
-        lossPlayer1 += 1;
-      }
-      databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
-    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
-    } else if (this.state.winner === this._players[0].userName && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
-    } else {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
-    }
-    if (result2 === undefined) {
-      if (this.state.winner === undefined && this.state.status === 'OVER') {
-        tiePlayer2 += 1;
-      } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
-        winPlayer2 += 1;
-      } else {
-        lossPlayer2 += 1;
-      }
-      databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
-    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
-    } else if (this.state.winner === this._players[1].userName && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
-    } else {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
-    }
+    await databaseUpdate
+      .getLeaderBoardRow(this._players[1].userName)
+      .then(row => {
+        result2 = row as LeaderBoardRow;
+      })
+      .then(() => {
+        if (result2 === undefined) {
+          if (this.state.winner === undefined && this.state.status === 'OVER') {
+            tiePlayer2 += 1;
+          } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
+            winPlayer2 += 1;
+          } else {
+            lossPlayer2 += 1;
+          }
+          databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
+        } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
+        } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
+        } else {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
+        }
+      })
+      .catch(() => {
+        throw new InvalidParametersError('Error fetching leaderboard row:');
+      });
   }
 
   /**
    * Updates the game history in the database after each move.
    *
    * @param gameId The unique identifier for the game.
-   * @param newMove The new move to be added to the game's history.
+   * @param newMoveName Name of the move
    */
-  async updateGameHistory(gameId: string, newMove: string, newMoveName: string): Promise<void> {
-    // Fetch the current game history from the database
-    const gameData = await databaseUpdate.getGameHistory(gameId);
-    if (!gameData) {
-      throw new Error('Game not found in database');
+  async callUpdateGameHistory(gameId: string, newMoveName: string) {
+    const date = new Date().toISOString();
+    const playerOne = this._players[0].userName;
+    const playerTwo = this._players[1].userName;
+    let winner = '';
+    if (this.state.status === 'OVER') {
+      if (this.state.winner === this.state.white) {
+        winner = this._players[0].userName;
+      } else {
+        winner = this._players[1].userName;
+      }
     }
-
-    // Parse the existing moves and add the new move
-    const { moves } = gameData;
-    moves.push(newMove);
-    const updatedMovesJSON = JSON.stringify(moves);
-    const { moveNames } = gameData;
-    moveNames.push(newMoveName);
-    const updatedMoveNamesJSON = JSON.stringify(moveNames);
+    const result =
+      // eslint-disable-next-line no-nested-ternary
+      this.state.status === 'OVER' ? (this.state.winner ? `${winner} Won` : 'Tie') : 'In Progress';
+    if (!playerOne || !playerTwo || !result) {
+      return;
+    }
+    // Get the FEN notation for the current move
+    const fenNotation = this.fenNotation();
 
     // Update the game history in the database
-    await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON, updatedMoveNamesJSON);
+    await databaseUpdate.updateGameHistory(
+      gameId,
+      date,
+      playerOne,
+      playerTwo,
+      result,
+      fenNotation,
+      newMoveName,
+    );
   }
 
   /**

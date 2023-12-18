@@ -113,11 +113,6 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   const [currentPage, setcurrentPage] = useState('mainMenu');
   const [gameHistories, setGameHistories] = useState<GameData[]>([]);
   const townController = useTownController();
-  useEffect(() => {
-    fetchAllGames().then((fetchedGames: React.SetStateAction<GameData[]>) => {
-      setGameHistories(fetchedGames);
-    });
-  }, []);
 
   const mainMenuPage = () => {
     setcurrentPage('mainMenu');
@@ -138,7 +133,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   if (currentPage === 'leaderboard') {
     return (
       <>
-        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
+        <Leaderboard gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
       </>
     );
   } else if (currentPage === 'multiplayer') {
@@ -150,7 +145,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   } else if (currentPage === 'gamereview') {
     return (
       <>
-        <GameReview mainMenu={mainMenuPage} games={gameHistories} />
+        <GameReview mainMenu={mainMenuPage} />
       </>
     );
   } else {
