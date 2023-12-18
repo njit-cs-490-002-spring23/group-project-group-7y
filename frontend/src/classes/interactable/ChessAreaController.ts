@@ -38,7 +38,7 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
     for (let i = 0; i < 8; i++) {
       const row: ChessCell[] = [];
       for (let j = 0; j < 8; j++) {
-        if (!readBoard || !readBoard[i][j] || !readBoard[i][j]?.piece) {
+        if (!readBoard || !readBoard[i] || !readBoard[i][j] || !readBoard[i][j]?.piece) {
           row.push(undefined);
         } else if (readBoard && readBoard[i][j]?.piece) {
           const cell = readBoard[i][j]?.piece;
