@@ -63,10 +63,7 @@ export const databaseUpdate = {
   addUser: (username: string, wins: number, ties: number, losses: number) =>
     db.run(
       'INSERT OR REPLACE INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)',
-      username,
-      wins,
-      ties,
-      losses,
+      [username, wins, ties, losses],
     ),
   updateLeaderBoardRow: (username: string, result: 'ties' | 'wins' | 'losses') => {
     if (result === 'ties') {

@@ -70,7 +70,7 @@ app.use(
 // Endpoint to get all game histories
 app.get('/api/leaderboard', async (_req, res) => {
   try {
-    const games = await chessDatabase.databaseUpdate.getAllGames();
+    const games = await chessDatabase.databaseUpdate.getLeaderBoard();
     res.json(games);
   } catch (error) {
     logError(error);
@@ -81,7 +81,7 @@ app.get('/api/leaderboard', async (_req, res) => {
 // Endpoint to get all game histories
 app.get('/api/games', async (_req, res) => {
   try {
-    const leaderboard = await chessDatabase.databaseUpdate.getLeaderBoard();
+    const leaderboard = await chessDatabase.databaseUpdate.getAllGames();
     res.json(leaderboard);
   } catch (error) {
     logError(error);

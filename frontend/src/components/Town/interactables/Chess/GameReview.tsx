@@ -53,7 +53,7 @@ export default function GameReview(props: GameReviewProps): JSX.Element {
           </Box>
           <Box overflowY='scroll'>
             <List spacing={3}>
-              {gameHistories.map(game => (
+              {gameHistories.reverse().map(game => (
                 <ListItem
                   key={game.gameId}
                   p={1}

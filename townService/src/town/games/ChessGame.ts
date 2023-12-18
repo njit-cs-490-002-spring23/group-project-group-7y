@@ -670,13 +670,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         if (_move.playerID === this.state.white) {
           this.state.winner = this.state.white;
           this.state.status = 'OVER';
+          this.updateLeaderBoard();
         } else {
           this.state.winner = this.state.black;
           this.state.status = 'OVER';
+          this.updateLeaderBoard();
         }
       } else if (this.isStalemate()) {
         this.state.winner = undefined;
         this.state.status = 'OVER';
+        this.updateLeaderBoard();
       }
     } else {
       throw new InvalidParametersError('Invalid Move');
@@ -1732,7 +1735,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
     } else if (this.state.winner === undefined && this.state.status === 'OVER') {
       databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
-    } else if (this.state.winner === this._players[0].userName && this.state.status === 'OVER') {
+    } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
       databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
     } else {
       databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
@@ -1748,7 +1751,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
     } else if (this.state.winner === undefined && this.state.status === 'OVER') {
       databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
-    } else if (this.state.winner === this._players[1].userName && this.state.status === 'OVER') {
+    } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
       databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
     } else {
       databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');

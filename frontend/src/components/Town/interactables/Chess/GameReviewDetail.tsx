@@ -236,7 +236,7 @@ export default function GameReviewDetail(props: GameReviewDetailProps): JSX.Elem
                 return (
                   <StyledChessSquare
                     id={`${rowIndex},${colIndex}`}
-                    background={`url('/assets/chessPieces/${color}_${type}.png') center/cover`}
+                    background={`url('/assets/chessPieces/${color}_${type}.png') center/contain no-repeat`}
                     onClick={async () => {}}
                     isDisabled={false}
                     key={colIndex}
