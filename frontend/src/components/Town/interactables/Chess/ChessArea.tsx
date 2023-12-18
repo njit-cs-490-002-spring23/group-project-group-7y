@@ -138,7 +138,7 @@ function ChessArea({ interactableID }: { interactableID: InteractableID }): JSX.
   if (currentPage === 'leaderboard') {
     return (
       <>
-        <Leaderboard results={chessResults} mainMenu={mainMenuPage} />
+        <Leaderboard gameAreaController={gameAreaController} mainMenu={mainMenuPage} />
       </>
     );
   } else if (currentPage === 'multiplayer') {

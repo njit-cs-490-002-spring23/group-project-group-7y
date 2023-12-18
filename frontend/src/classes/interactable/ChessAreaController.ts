@@ -194,7 +194,7 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
     if ((turnBeforeUpdate || this.whoseTurn) && turnBeforeUpdate?.id !== this.whoseTurn?.id) {
       this.emit('turnChanged', this.isOurTurn);
     }
-    if (this.game && beforeDrawOffer !== this.drawOfferer()) {
+    if (this.game && beforeDrawOffer !== newModel.game?.state.drawOffer) {
       this.emit('drawOffered', this.game.state.drawOffer);
     }
   }

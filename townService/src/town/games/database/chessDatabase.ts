@@ -68,7 +68,6 @@ export const databaseUpdate = {
       ties,
       losses,
     ),
-  getLeaderBoard: () => db.get('SELECT * FROM leaderboard ORDER BY wins, ties, losses DESC'),
   updateLeaderBoardRow: (username: string, result: 'ties' | 'wins' | 'losses') => {
     if (result === 'ties') {
       db.run('UPDATE leaderboard SET ties = ties + 1 WHERE username = ?', username);
@@ -87,6 +86,20 @@ export const databaseUpdate = {
           resolve(rows as GameData[]);
         }
       });
+    }),
+  getLeaderBoard: (): Promise<LeaderBoardRow[]> =>
+    new Promise((resolve, reject) => {
+      db.all(
+        'SELECT username, wins, ties, losses, RANK () OVER ( ORDER BY wins DESC, ties DESC, losses ASC ) rank FROM leaderboard ORDER BY wins DESC, ties DESC, losses ASC',
+        [],
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows as LeaderBoardRow[]);
+          }
+        },
+      );
     }),
   getGameHistory: async (gameId: string): Promise<GameData | undefined> =>
     new Promise((resolve, reject) => {

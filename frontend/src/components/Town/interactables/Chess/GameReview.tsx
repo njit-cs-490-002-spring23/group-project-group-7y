@@ -36,34 +36,35 @@ export default function GameReview(props: GameReviewProps): JSX.Element {
           <Box as='header' textAlign='center' mb={4} bg='orange'>
             <h2>Game Review</h2>
           </Box>
-          <List spacing={3}>
-            {props.games.map(game => (
-              <ListItem
-                key={game.gameId}
-                p={1}
-                bg='green'
-                color='black'
-                mb={1}
-                _hover={{ bg: 'green.600' }}
-                cursor='pointer'>
-                <Button
+          <Box overflowY='scroll'>
+            <List spacing={3}>
+              {props.games.map(game => (
+                <ListItem
+                  key={game.gameId}
+                  p={1}
                   bg='green'
-                  w='100%'
-                  justifyContent='flex-start'
-                  fontSize='sm'
-                  onClick={() => selectGame(game.gameId)}>
-                  <Box w='100%' display='flex' flexDirection='column'>
-                    <Text>Date: {game.date}</Text>
-                    <Text>
-                      Player1: {game.playerOne} | Player2: {game.playerTwo}
-                    </Text>
-                    <Text>Result: {game.result}</Text>
-                  </Box>
-                </Button>
-              </ListItem>
-            ))}
-          </List>
-
+                  color='black'
+                  mb={1}
+                  _hover={{ bg: 'green.600' }}
+                  cursor='pointer'>
+                  <Button
+                    bg='green'
+                    w='100%'
+                    justifyContent='flex-start'
+                    fontSize='sm'
+                    onClick={() => selectGame(game.gameId)}>
+                    <Box w='100%' display='flex' flexDirection='column'>
+                      <Text>Date: {game.date}</Text>
+                      <Text>
+                        Player1: {game.playerOne} | Player2: {game.playerTwo}
+                      </Text>
+                      <Text>Result: {game.result}</Text>
+                    </Box>
+                  </Button>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
           <Button bg='green' color='white' onClick={props.mainMenu} mt={4}>
             Home Screen
           </Button>

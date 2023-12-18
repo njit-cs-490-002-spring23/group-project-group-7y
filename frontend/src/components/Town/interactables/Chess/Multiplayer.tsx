@@ -4,6 +4,9 @@ import { BoardLocation, ChessCell } from '../../../../types/CoveyTownSocket';
 import { Box, Button, Container, chakra, ButtonGroup, useToast } from '@chakra-ui/react';
 import ChessAreaController from '../../../../classes/interactable/ChessAreaController';
 import useTownController from '../../../../hooks/useTownController';
+import { fetchLeaderboard } from '../../../../services/gameService';
+import { LeaderboardRow } from './Leaderboard';
+import MainMenu from './MainMenu';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const StyledChessRow = chakra(Box, {
@@ -67,6 +70,12 @@ export default function Multiplayer(props: {
     sourceColIndex: undefined,
   });
   const [possibleMoves, setPossibeMoves] = useState<BoardLocation[]>([]);
+  const [leaderboard, setLeaderBoard] = useState<LeaderboardRow[]>([]);
+  const realTimeLeaderBoard = () => {
+    fetchLeaderboard().then((updateLeaderboard: React.SetStateAction<LeaderboardRow[]>) => {
+      setLeaderBoard(updateLeaderboard);
+    });
+  };
   const townController = useTownController();
   const displayToast = useToast();
   const updateTitle = () => {
@@ -77,7 +86,23 @@ export default function Multiplayer(props: {
       } else {
         opponent = gameAreaController.white.userName;
       }
-      setTitleMessage(`You v. ${opponent}`);
+      if (leaderboard) {
+        const ourRank = leaderboard.find(row => {
+          return townController.ourPlayer.userName === row.username;
+        });
+        const opponentRank = leaderboard.find(row => {
+          return opponent === row.username;
+        });
+        if (ourRank && opponentRank) {
+          setTitleMessage(`You (${ourRank?.rank}) v. ${opponent} (${opponentRank?.rank})`);
+        } else if (ourRank && !opponentRank) {
+          setTitleMessage(`You (${ourRank?.rank}) v. ${opponent}`);
+        } else if (!ourRank && opponentRank) {
+          setTitleMessage(`You v. ${opponent} (${opponentRank?.rank})`);
+        } else {
+          setTitleMessage(`You v. ${opponent}`);
+        }
+      } else setTitleMessage(`You v. ${opponent}`);
     }
   };
   const updateDrawButtons = () => {
@@ -86,13 +111,21 @@ export default function Multiplayer(props: {
         setDrawOffered(true);
       } else if (gameAreaController.drawOfferer() === townController.ourPlayer.id) {
         setDrawOfferSent(true);
+      } else if (gameAreaController.drawOfferer() === undefined) {
+        setDrawOfferSent(false);
       } else if (gameAreaController.drawOfferer() !== townController.ourPlayer.id) {
         setDrawOfferSent(false);
       }
     }
   };
   useEffect(() => {
+    fetchLeaderboard().then((updateLeaderboard: React.SetStateAction<LeaderboardRow[]>) => {
+      console.log('leaderboard');
+      console.log(updateLeaderboard);
+      setLeaderBoard(updateLeaderboard);
+    });
     function turnChangedEventHandler(turn: boolean) {
+      realTimeLeaderBoard();
       setOurTurn(turn);
     }
     function boardChangedEventHandler(board: ChessCell[][]) {
@@ -157,8 +190,17 @@ export default function Multiplayer(props: {
       <Container color='#134f5cff' background={`url('/assets/397848.jpg') no-repeat center/cover`}>
         <Box marginTop='5%' as='header' textAlign='center' mb={4} color='red'>
           <strong>
-            <h1> {titleMessage} </h1>
+            <h1>{titleMessage}</h1>{' '}
           </strong>
+        </Box>{' '}
+        <Box marginTop='5%' as='header' textAlign='center' mb={4} color='red'>
+          {gameAreaController.isOurTurn && gameAreaController.status === 'IN_PROGRESS' ? (
+            <h1> Your Turn! </h1>
+          ) : gameAreaController.status === 'IN_PROGRESS' ? (
+            <h1> Opponent Turn! </h1>
+          ) : (
+            <></>
+          )}
         </Box>
         <StyledChessBoard justifyContent='center'>
           {gameBoard.map((row, rowIndex) => (
@@ -295,6 +337,9 @@ export default function Multiplayer(props: {
             color='white'
             onClick={() => {
               gameAreaController.leaveGame();
+              if (!gameAreaController.black) {
+                props.mainMenu();
+              }
             }}
             variant='outline'>
             Home Screen
@@ -304,6 +349,9 @@ export default function Multiplayer(props: {
             color='red'
             onClick={() => {
               gameAreaController.leaveGame();
+              if (!gameAreaController.black) {
+                props.mainMenu();
+              }
             }}
             variant='outline'>
             Resign
@@ -311,7 +359,7 @@ export default function Multiplayer(props: {
           <Button
             bg='blue'
             color='white'
-            disabled={drawOfferSent}
+            disabled={gameAreaController.drawOfferer() !== undefined}
             onClick={async () => {
               await gameAreaController.drawCommand('offer');
               setDrawOfferSent(true);
@@ -335,6 +383,8 @@ export default function Multiplayer(props: {
             disabled={!drawOffered}
             onClick={async () => {
               await gameAreaController.drawCommand('reject');
+              setDrawOfferSent(false);
+              setDrawOffered(false);
             }}
             variant='outline'>
             Reject Draw
