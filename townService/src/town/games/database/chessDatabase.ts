@@ -101,39 +101,65 @@ export const databaseUpdate = {
       });
     }),
 
-  // Update the updateGameHistory method
-  async updateGameHistory(gameId: string, newMove: string, newMoveName: string): Promise<void> {
+  async updateGameHistory(
+    gameId: string,
+    date: string,
+    playerOne: string,
+    playerTwo: string,
+    result: string,
+    newMove: string,
+    newMoveName: string,
+  ) {
     try {
       const gameData = await this.getGameHistory(gameId);
-      if (!gameData) {
-        throw new Error('Game not found in database');
+      let moves: string[];
+      let moveNames: string[];
+      if (gameData) {
+        if (Array.isArray(gameData.moves)) {
+          moves = gameData.moves;
+        } else {
+          moves = JSON.parse(gameData.moves);
+          moveNames = gameData.moveNames || [];
+        }
+        if (Array.isArray(gameData.moveNames)) {
+          moveNames = gameData.moveNames;
+        } else {
+          moveNames = JSON.parse(gameData.moveNames);
+        }
+      } else {
+        // Initialize as empty arrays if not
+        moves = [];
+        moveNames = [];
       }
-
-      const moves = gameData.moves || [];
-      const moveNames = gameData.moveNames || [];
+      // Add new move and move name
       moves.push(newMove);
       moveNames.push(newMoveName);
-      const updatedMovesJSON = JSON.stringify(moves);
-      const moveNamesJSON = JSON.stringify(moveNames);
 
-      db.run(
-        'UPDATE gameHistories SET moves = ? WHERE gameId = ?',
-        [updatedMovesJSON, gameId],
-        err => {
-          if (err) {
-            throw err;
-          }
-        },
-      );
-      db.run(
-        'UPDATE gameHistories SET moveNames = ? WHERE gameId = ?',
-        [moveNamesJSON, gameId],
-        err => {
-          if (err) {
-            throw err;
-          }
-        },
-      );
+      const updatedMovesJSON = JSON.stringify(moves);
+      const updatedMoveNamesJSON = JSON.stringify(moveNames);
+
+      if (!gameData) {
+        // Insert new game history record
+        db.run(
+          'INSERT INTO gameHistories (gameId, date, playerOne, playerTwo, result, moves, moveNames) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [gameId, date, playerOne, playerTwo, result, updatedMovesJSON, updatedMoveNamesJSON],
+          err => {
+            if (err) {
+              throw err;
+            }
+          },
+        );
+      } else {
+        db.run(
+          'UPDATE gameHistories SET moves = ?, moveNames = ?, date = ?, playerOne = ?, playerTwo = ?, result = ? WHERE gameId = ?',
+          [updatedMovesJSON, updatedMoveNamesJSON, date, playerOne, playerTwo, result, gameId],
+          err => {
+            if (err) {
+              throw err;
+            }
+          },
+        );
+      }
     } catch (error) {
       console.error('Error updating game history:', error);
       throw error;
