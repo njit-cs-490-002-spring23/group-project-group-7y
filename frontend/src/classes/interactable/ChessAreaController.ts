@@ -4,6 +4,8 @@ import {
   ChessGameState,
   ChessCell,
   ChessFilePosition,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ChessPiece,
   ChessRankPosition,
   BoardLocation,
   PlayerID,

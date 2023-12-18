@@ -1,6 +1,8 @@
 import React from 'react';
 import { GameResult } from '../../../../types/CoveyTownSocket';
 import { Box, Button, Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { fetchLeaderboard } from '../../../../services/gameService';
 
 export type LeaderBoardProp = {
   results: GameResult[];
