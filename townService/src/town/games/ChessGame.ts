@@ -1752,7 +1752,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
         }
       })
-      .catch(error => {
+      .catch(() => {
         throw new InvalidParametersError('Error fetching leaderboard row:');
       });
   }
