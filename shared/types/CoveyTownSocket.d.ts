@@ -194,6 +194,8 @@ export interface ChessGameState extends WinnableGameState {
   black?: PlayerID;
   drawOffer?: PlayerID;
   drawAccept?: PlayerID;
+  blackPromotionPiece?: 'K' | 'Q' | 'R' | 'B' | 'N';
+  whitePromotionPiece?: 'K' | 'Q' | 'R' | 'B' | 'N';
   halfMoves: number;
 }
 
