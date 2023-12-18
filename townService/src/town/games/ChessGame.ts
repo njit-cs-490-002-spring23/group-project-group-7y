@@ -759,12 +759,34 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
           }
         }
       } else {
+        let whitePromotion: 'K' | 'Q' | 'R' | 'B' | 'N' = 'Q';
+        let blackPromotion: 'K' | 'Q' | 'R' | 'B' | 'N' = 'Q';
+        if (this.state.blackPromotionPiece) {
+          blackPromotion = this.state.blackPromotionPiece;
+        }
+        if (this.state.whitePromotionPiece) {
+          whitePromotion = this.state.whitePromotionPiece;
+        }
+        let setType = _move.move.gamePiece.pieceType;
+        if (
+          _move.move.gamePiece.pieceType === 'P' &&
+          _move.move.gamePiece.pieceColor === 'B' &&
+          _move.move.destinationRank === 1
+        ) {
+          setType = blackPromotion;
+        } else if (
+          _move.move.gamePiece.pieceType === 'P' &&
+          _move.move.gamePiece.pieceColor === 'W' &&
+          _move.move.destinationRank === 8
+        ) {
+          setType = whitePromotion;
+        }
         this.state.board[this._rowToRank(_move.move.destinationRank)][
           this._fileToIndex(_move.move.destinationFile)
         ] = {
           piece: {
             pieceColor: _move.move.gamePiece.pieceColor,
-            pieceType: _move.move.gamePiece.pieceType,
+            pieceType: setType,
             moved: true,
           },
         };
