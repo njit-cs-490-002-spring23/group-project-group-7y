@@ -584,7 +584,38 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     }
     return board;
   }
-
+  private constructChessNotation(move: GameMove<ChessMove>, isCapture: boolean) {
+    let notation = '';
+    
+    // Add piece type, except for pawns
+    if (move.move.gamePiece.pieceType && move.move.gamePiece.pieceType !== 'P') {
+      notation += move.move.gamePiece.pieceType.charAt(0).toUpperCase();
+    }
+  
+    // If the move.move is a capture, include 'x' and possibly the departing file for pawns
+    if (isCapture) {
+      if (move.move.gamePiece.pieceType === 'P') {
+        notation += move.move.currentFile;
+      }
+      notation += 'x';
+    }
+  
+    // Add destination square
+    notation += move.move.destinationFile + move.move.destinationRank;
+  
+    // Add promotion notation defaulting to queen
+    if (move.move.gamePiece.pieceType === 'P' && (move.move.destinationRank === 1 || move.move.destinationRank === 8)) {
+      notation += '=Q';
+    }
+  
+    if (this.isCheckmate()) {
+      notation += '#';
+    } else if (this.isKingInCheck(move.move.gamePiece.pieceColor)) {
+      notation += '+';
+    }
+  
+    return notation;
+  }
   /*
    * Applies a player's move to the game.
    * Uses the player's ID to determine which game pieces (white vs black) they are using (ignores move.gamePiece)
@@ -611,11 +642,16 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     ) {
       throw new InvalidParametersError('Not Your Turn');
     }
+    let capture = false;
     if (this._validateGamePieceMovement(_move)) {
       // updates the moves with the current game move
       const updateValidMovesToGameState = [...this.state.moves, _move.move];
       this.state.moves = updateValidMovesToGameState;
-
+      if (this.state.board[this._rowToRank(_move.move.destinationRank)][
+        this._fileToIndex(_move.move.destinationFile)
+      ] !== undefined){
+        capture = true;
+      }
       // updates the state of the board with the new position and sets the old position to undefined1
       this.state.board[this._rowToRank(_move.move.destinationRank)][
         this._fileToIndex(_move.move.destinationFile)
@@ -645,6 +681,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     } else {
       throw new InvalidParametersError('Invalid Move');
     }
+    this.callUpdateGameHistory(_move.gameID, this.constructChessNotation(_move,capture));
   }
 
   // Checks if the desination and pieces on the way are empty
@@ -1722,25 +1759,42 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * Updates the game history in the database after each move.
    *
    * @param gameId The unique identifier for the game.
-   * @param newMove The new move to be added to the game's history.
+   * @param newMoveName Name of the move
    */
-  async updateGameHistory(gameId: string, newMove: string, newMoveName: string): Promise<void> {
-    // Fetch the current game history from the database
-    const gameData = await databaseUpdate.getGameHistory(gameId);
-    if (!gameData) {
-      throw new Error('Game not found in database');
+  async callUpdateGameHistory(gameId: string, newMoveName: string) {
+    const date = new Date().toISOString();
+    const playerOne = this._players[0].userName;
+    const playerTwo = this._players[1].userName;
+    let winner = "";
+    if (this.state.status === 'OVER'){
+      if (this.state.winner === this.state.white){
+        winner = this._players[0].userName;
+      }else{
+        winner = this._players[1].userName;
+      }
     }
-
-    // Parse the existing moves and add the new move
-    const { moves } = gameData;
-    moves.push(newMove);
-    const updatedMovesJSON = JSON.stringify(moves);
-    const { moveNames } = gameData;
-    moveNames.push(newMoveName);
-    const updatedMoveNamesJSON = JSON.stringify(moveNames);
+    const result =
+      this.state.status === 'OVER'
+        ? this.state.winner
+          ? `${winner} Won`
+          : 'Tie'
+        : 'In Progress';
+    if (!playerOne || !playerTwo || !result) {
+      return;
+    }
+    // Get the FEN notation for the current move
+    const fenNotation = this.fenNotation();
 
     // Update the game history in the database
-    await databaseUpdate.updateGameHistory(gameId, updatedMovesJSON, updatedMoveNamesJSON);
+    await databaseUpdate.updateGameHistory(
+      gameId,
+      date,
+      playerOne,
+      playerTwo,
+      result,
+      fenNotation,
+      newMoveName,
+    );
   }
 
   /**
