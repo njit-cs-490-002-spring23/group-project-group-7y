@@ -603,7 +603,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     // Add destination square
     notation += move.move.destinationFile + move.move.destinationRank;
   
-    // Add promotion notation if applicable (for pawns)
+    // Add promotion notation defaulting to queen
     if (move.move.gamePiece.pieceType === 'P' && (move.move.destinationRank === 1 || move.move.destinationRank === 8)) {
       notation += '=Q';
     }
