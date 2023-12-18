@@ -660,19 +660,118 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
         capture = true;
       }
       // updates the state of the board with the new position and sets the old position to undefined1
-      this.state.board[this._rowToRank(_move.move.destinationRank)][
-        this._fileToIndex(_move.move.destinationFile)
-      ] = {
-        piece: {
-          pieceColor: _move.move.gamePiece.pieceColor,
-          pieceType: _move.move.gamePiece.pieceType,
-          moved: true,
-        },
-      };
-      this.state.board[this._rowToRank(_move.move.currentRank)][
-        this._fileToIndex(_move.move.currentFile)
-      ] = undefined;
-
+      if (
+        _move.move.gamePiece.pieceType === 'K' &&
+        Math.abs(
+          this._fileToColumn(_move.move.currentFile) -
+            this._fileToColumn(_move.move.destinationFile),
+        ) === 2
+      ) {
+        const destColumn = this._fileToColumn(_move.move.destinationFile);
+        const destRow = this._rankToRow(_move.move.destinationRank);
+        if (destRow === 0) {
+          if (destColumn === 2) {
+            this.state.board[this._rowToRank(_move.move.destinationRank)][
+              this._fileToIndex(_move.move.destinationFile)
+            ] = {
+              piece: {
+                pieceColor: _move.move.gamePiece.pieceColor,
+                pieceType: _move.move.gamePiece.pieceType,
+                moved: true,
+              },
+            };
+            this.state.board[0][3] = {
+              piece: {
+                pieceColor: 'B',
+                pieceType: 'R',
+                moved: true,
+              },
+            };
+            this.state.board[0][0] = undefined;
+            this.state.board[this._rowToRank(_move.move.currentRank)][
+              this._fileToIndex(_move.move.currentFile)
+            ] = undefined;
+          } else if (destColumn === 6) {
+            this.state.board[this._rowToRank(_move.move.destinationRank)][
+              this._fileToIndex(_move.move.destinationFile)
+            ] = {
+              piece: {
+                pieceColor: _move.move.gamePiece.pieceColor,
+                pieceType: _move.move.gamePiece.pieceType,
+                moved: true,
+              },
+            };
+            this.state.board[0][5] = {
+              piece: {
+                pieceColor: 'B',
+                pieceType: 'R',
+                moved: true,
+              },
+            };
+            this.state.board[0][7] = undefined;
+            this.state.board[this._rowToRank(_move.move.currentRank)][
+              this._fileToIndex(_move.move.currentFile)
+            ] = undefined;
+          }
+        } else if (destRow === 7) {
+          if (destColumn === 2) {
+            this.state.board[this._rowToRank(_move.move.destinationRank)][
+              this._fileToIndex(_move.move.destinationFile)
+            ] = {
+              piece: {
+                pieceColor: _move.move.gamePiece.pieceColor,
+                pieceType: _move.move.gamePiece.pieceType,
+                moved: true,
+              },
+            };
+            this.state.board[7][3] = {
+              piece: {
+                pieceColor: 'W',
+                pieceType: 'R',
+                moved: true,
+              },
+            };
+            this.state.board[7][0] = undefined;
+            this.state.board[this._rowToRank(_move.move.currentRank)][
+              this._fileToIndex(_move.move.currentFile)
+            ] = undefined;
+          } else if (destColumn === 6) {
+            this.state.board[this._rowToRank(_move.move.destinationRank)][
+              this._fileToIndex(_move.move.destinationFile)
+            ] = {
+              piece: {
+                pieceColor: _move.move.gamePiece.pieceColor,
+                pieceType: _move.move.gamePiece.pieceType,
+                moved: true,
+              },
+            };
+            this.state.board[7][5] = {
+              piece: {
+                pieceColor: 'W',
+                pieceType: 'R',
+                moved: true,
+              },
+            };
+            this.state.board[7][7] = undefined;
+            this.state.board[this._rowToRank(_move.move.currentRank)][
+              this._fileToIndex(_move.move.currentFile)
+            ] = undefined;
+          }
+        }
+      } else {
+        this.state.board[this._rowToRank(_move.move.destinationRank)][
+          this._fileToIndex(_move.move.destinationFile)
+        ] = {
+          piece: {
+            pieceColor: _move.move.gamePiece.pieceColor,
+            pieceType: _move.move.gamePiece.pieceType,
+            moved: true,
+          },
+        };
+        this.state.board[this._rowToRank(_move.move.currentRank)][
+          this._fileToIndex(_move.move.currentFile)
+        ] = undefined;
+      }
       if (this.isCheckmate()) {
         if (_move.playerID === this.state.white) {
           this.state.winner = this.state.white;
@@ -910,7 +1009,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
             return true;
           }
         }
-        return false;
+        return true;
       case 'Q':
         if (destFileNumber > currFileNumber) {
           diffFile = destFileNumber - currFileNumber;
