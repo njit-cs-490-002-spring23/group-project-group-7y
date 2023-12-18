@@ -168,7 +168,6 @@ export default class ChessAreaController extends GameAreaController<ChessGameSta
    * If the turn has not changed, does not emit the event.
    */
   protected _updateFrom(newModel: GameArea<ChessGameState>): void {
-    console.log('Chess Agrea State Updated Called');
     const boardBeforeUpdate = this.board;
     const turnBeforeUpdate = this.whoseTurn;
     const beforeDrawOffer = this.game?.state.drawOffer;

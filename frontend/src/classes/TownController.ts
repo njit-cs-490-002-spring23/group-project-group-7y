@@ -441,13 +441,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       console.log('interactableUpdate');
       console.log(interactable);
       if (interactable.type === 'ChessArea') {
-        console.log('interactableUpdate for chess');
-        console.log(interactable);
         const updatedGameArea = this._gameAreas.find(eachArea => eachArea.id === interactable.id);
-        console.log(updatedGameArea);
         updatedGameArea?.updateFrom(interactable, this._playersByIDs(interactable.occupantsByID));
       } else if (isConversationArea(interactable)) {
-        console.log('wrong emit into conversation area');
         const updatedConversationArea = this.conversationAreas.find(c => c.id === interactable.id);
         if (updatedConversationArea) {
           const emptyNow = updatedConversationArea.isEmpty();
@@ -459,7 +455,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
           }
         }
       } else if (isViewingArea(interactable)) {
-        console.log('wrong emit into viewing area');
         const updatedViewingArea = this._viewingAreas.find(
           eachArea => eachArea.id === interactable.id,
         );

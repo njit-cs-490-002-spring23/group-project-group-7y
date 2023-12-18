@@ -1,19 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, List, ListItem, Button, Text } from '@chakra-ui/react';
 import GameReviewDetail from './GameReviewDetail';
 
 import { GameData } from '../../../../types/CoveyTownSocket';
+import { fetchAllGames } from '../../../../services/gameService';
 
 export type GameReviewProps = {
-  games: GameData[];
   mainMenu: () => void;
 };
 
 export default function GameReview(props: GameReviewProps): JSX.Element {
+  const [gameHistories, setGameHistories] = useState<GameData[]>([]);
   const [currentView, setCurrentView] = useState('gameList');
   const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
+
+  useEffect(() => {
+    // Fetch game data whenever the component is rendered
+    const fetchGames = async () => {
+      try {
+        const fetchedGames = await fetchAllGames();
+        setGameHistories(fetchedGames);
+      } catch (error) {
+        console.error('Failed to fetch games:', error);
+      }
+    };
+
+    fetchGames();
+  }, []);
   const selectGame = (gameId: string) => {
-    const foundGame = props.games.find(game => game.gameId === gameId);
+    const foundGame = gameHistories.find(game => game.gameId === gameId);
     setSelectedGame(foundGame || null);
     setCurrentView('gameReviewDetail');
   };
@@ -38,7 +53,7 @@ export default function GameReview(props: GameReviewProps): JSX.Element {
           </Box>
           <Box overflowY='scroll'>
             <List spacing={3}>
-              {props.games.map(game => (
+              {gameHistories.map(game => (
                 <ListItem
                   key={game.gameId}
                   p={1}
