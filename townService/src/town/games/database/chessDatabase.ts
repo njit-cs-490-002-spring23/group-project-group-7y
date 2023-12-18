@@ -59,12 +59,38 @@ db.exec(
 
 export const databaseUpdate = {
   getLeaderBoardRow: (username: string) =>
-    db.get('SELECT * FROM leaderboard WHERE username = ?', username),
-  addUser: (username: string, wins: number, ties: number, losses: number) =>
-    db.run(
-      'INSERT OR REPLACE INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)',
-      [username, wins, ties, losses],
-    ),
+    new Promise((resolve, reject) => {
+      db.get('SELECT * FROM leaderboard WHERE username = ?', [username], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row);
+        }
+      });
+    }),
+  addUser: (username: string, wins: number, ties: number, losses: number) => {
+    db.get('SELECT * FROM leaderboard WHERE username = ?', username, (err, row) => {
+      if (err) {
+        console.log(err);
+      } else if (row) {
+        // Update existing user
+        db.run('UPDATE leaderboard SET wins = ?, ties = ?, losses = ? WHERE username = ?', [
+          wins,
+          ties,
+          losses,
+          username,
+        ]);
+      } else {
+        // Insert new user
+        db.run('INSERT INTO leaderboard (username, wins, ties, losses) VALUES (?, ?, ?, ?)', [
+          username,
+          wins,
+          ties,
+          losses,
+        ]);
+      }
+    });
+  },
   updateLeaderBoardRow: (username: string, result: 'ties' | 'wins' | 'losses') => {
     if (result === 'ties') {
       db.run('UPDATE leaderboard SET ties = ties + 1 WHERE username = ?', username);

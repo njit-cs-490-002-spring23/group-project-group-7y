@@ -1714,15 +1714,26 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
    */
   public updateLeaderBoard(): void {
+    console.log("Updating Leaderboard");
     let winPlayer1 = 0;
     let winPlayer2 = 0;
     let lossPlayer1 = 0;
     let lossPlayer2 = 0;
     let tiePlayer1 = 0;
     let tiePlayer2 = 0;
-
-    const result = databaseUpdate.getLeaderBoardRow(this._players[0].userName);
-    const result2 = databaseUpdate.getLeaderBoardRow(this._players[1].userName);
+    let result;
+    let result2;
+    databaseUpdate.getLeaderBoardRow(this._players[0].userName).then(row => {
+      result=row;
+    }).catch(error => {
+      console.error('Error fetching leaderboard row:', error);
+    });
+    databaseUpdate.getLeaderBoardRow(this._players[1].userName).then(row => {
+      result2=row;
+    }).catch(error => {
+      console.error('Error fetching leaderboard row:', error);
+    });
+    console.log(result);
 
     if (result === undefined) {
       if (this.state.winner === undefined && this.state.status === 'OVER') {
