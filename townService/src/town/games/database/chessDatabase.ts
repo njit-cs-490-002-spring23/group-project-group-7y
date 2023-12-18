@@ -64,7 +64,7 @@ export const databaseUpdate = {
         if (err) {
           reject(err);
         } else {
-          resolve(row);
+          resolve(row as LeaderBoardRow);
         }
       });
     }),

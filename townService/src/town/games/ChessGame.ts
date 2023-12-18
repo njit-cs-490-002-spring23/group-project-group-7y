@@ -5,7 +5,6 @@
 import { fetchMiddlewares } from 'tsoa';
 import axios from 'axios';
 import { log } from 'node:console';
-import { isBreakOrContinueStatement } from 'typescript';
 import {
   ChessGameState,
   ChessMove,
@@ -17,6 +16,7 @@ import {
   GameMove,
   ChessPosition,
   PieceWithPosition,
+  LeaderBoardRow,
 } from '../../types/CoveyTownSocket';
 import Player from '../../lib/Player';
 
@@ -584,14 +584,15 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     }
     return board;
   }
-  private constructChessNotation(move: GameMove<ChessMove>, isCapture: boolean) {
+
+  public constructChessNotation(move: GameMove<ChessMove>, isCapture: boolean) {
     let notation = '';
-    
+
     // Add piece type, except for pawns
     if (move.move.gamePiece.pieceType && move.move.gamePiece.pieceType !== 'P') {
       notation += move.move.gamePiece.pieceType.charAt(0).toUpperCase();
     }
-  
+
     // If the move.move is a capture, include 'x' and possibly the departing file for pawns
     if (isCapture) {
       if (move.move.gamePiece.pieceType === 'P') {
@@ -599,23 +600,27 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       }
       notation += 'x';
     }
-  
+
     // Add destination square
     notation += move.move.destinationFile + move.move.destinationRank;
-  
+
     // Add promotion notation defaulting to queen
-    if (move.move.gamePiece.pieceType === 'P' && (move.move.destinationRank === 1 || move.move.destinationRank === 8)) {
+    if (
+      move.move.gamePiece.pieceType === 'P' &&
+      (move.move.destinationRank === 1 || move.move.destinationRank === 8)
+    ) {
       notation += '=Q';
     }
-  
+
     if (this.isCheckmate()) {
       notation += '#';
     } else if (this.isKingInCheck(move.move.gamePiece.pieceColor)) {
       notation += '+';
     }
-  
+
     return notation;
   }
+
   /*
    * Applies a player's move to the game.
    * Uses the player's ID to determine which game pieces (white vs black) they are using (ignores move.gamePiece)
@@ -647,9 +652,11 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
       // updates the moves with the current game move
       const updateValidMovesToGameState = [...this.state.moves, _move.move];
       this.state.moves = updateValidMovesToGameState;
-      if (this.state.board[this._rowToRank(_move.move.destinationRank)][
-        this._fileToIndex(_move.move.destinationFile)
-      ] !== undefined){
+      if (
+        this.state.board[this._rowToRank(_move.move.destinationRank)][
+          this._fileToIndex(_move.move.destinationFile)
+        ] !== undefined
+      ) {
         capture = true;
       }
       // updates the state of the board with the new position and sets the old position to undefined1
@@ -684,7 +691,7 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     } else {
       throw new InvalidParametersError('Invalid Move');
     }
-    this.callUpdateGameHistory(_move.gameID, this.constructChessNotation(_move,capture));
+    this.callUpdateGameHistory(_move.gameID, this.constructChessNotation(_move, capture));
   }
 
   // Checks if the desination and pieces on the way are empty
@@ -1713,60 +1720,71 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
    * If the username of the player is not found, insert the player into the leaderboard with their username, wins, ties and losses
    * If found, check the state for who won. If the game is set to over and winner is undecided the game ended in a tie.
    */
-  public updateLeaderBoard(): void {
-    console.log("Updating Leaderboard");
+  public async updateLeaderBoard() {
+    console.log('Updating Leaderboard');
     let winPlayer1 = 0;
     let winPlayer2 = 0;
     let lossPlayer1 = 0;
     let lossPlayer2 = 0;
     let tiePlayer1 = 0;
     let tiePlayer2 = 0;
-    let result;
-    let result2;
-    databaseUpdate.getLeaderBoardRow(this._players[0].userName).then(row => {
-      result=row;
-    }).catch(error => {
-      console.error('Error fetching leaderboard row:', error);
-    });
-    databaseUpdate.getLeaderBoardRow(this._players[1].userName).then(row => {
-      result2=row;
-    }).catch(error => {
-      console.error('Error fetching leaderboard row:', error);
-    });
-    console.log(result);
+    let result: LeaderBoardRow | undefined;
+    let result2: LeaderBoardRow | undefined;
 
-    if (result === undefined) {
-      if (this.state.winner === undefined && this.state.status === 'OVER') {
-        tiePlayer1 += 1;
-      } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
-        winPlayer1 += 1;
-      } else {
-        lossPlayer1 += 1;
-      }
-      databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
-    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
-    } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
-    } else {
-      databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
-    }
-    if (result2 === undefined) {
-      if (this.state.winner === undefined && this.state.status === 'OVER') {
-        tiePlayer2 += 1;
-      } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
-        winPlayer2 += 1;
-      } else {
-        lossPlayer2 += 1;
-      }
-      databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
-    } else if (this.state.winner === undefined && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
-    } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
-    } else {
-      databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
-    }
+    await databaseUpdate
+      .getLeaderBoardRow(this._players[0].userName)
+      .then(row => {
+        result = row as LeaderBoardRow;
+      })
+      .then(() => {
+        if (result === undefined) {
+          if (this.state.winner === undefined && this.state.status === 'OVER') {
+            tiePlayer1 += 1;
+          } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
+            winPlayer1 += 1;
+          } else {
+            lossPlayer1 += 1;
+          }
+          databaseUpdate.addUser(this._players[0].userName, winPlayer1, tiePlayer1, lossPlayer1);
+        } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'ties');
+        } else if (this.state.winner === this._players[0].id && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'wins');
+        } else {
+          databaseUpdate.updateLeaderBoardRow(this._players[0].userName, 'losses');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching leaderboard row:', error);
+      });
+
+    await databaseUpdate
+      .getLeaderBoardRow(this._players[1].userName)
+      .then(row => {
+        result2 = row as LeaderBoardRow;
+      })
+      .then(() => {
+        if (result2 === undefined) {
+          if (this.state.winner === undefined && this.state.status === 'OVER') {
+            tiePlayer2 += 1;
+          } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
+            winPlayer2 += 1;
+          } else {
+            lossPlayer2 += 1;
+          }
+          databaseUpdate.addUser(this._players[1].userName, winPlayer2, tiePlayer2, lossPlayer2);
+        } else if (this.state.winner === undefined && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'ties');
+        } else if (this.state.winner === this._players[1].id && this.state.status === 'OVER') {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'wins');
+        } else {
+          databaseUpdate.updateLeaderBoardRow(this._players[1].userName, 'losses');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching leaderboard row:', error);
+      });
+    console.log(result);
   }
 
   /**
@@ -1779,20 +1797,17 @@ export default class ChessGame extends Game<ChessGameState, ChessMove> {
     const date = new Date().toISOString();
     const playerOne = this._players[0].userName;
     const playerTwo = this._players[1].userName;
-    let winner = "";
-    if (this.state.status === 'OVER'){
-      if (this.state.winner === this.state.white){
+    let winner = '';
+    if (this.state.status === 'OVER') {
+      if (this.state.winner === this.state.white) {
         winner = this._players[0].userName;
-      }else{
+      } else {
         winner = this._players[1].userName;
       }
     }
     const result =
-      this.state.status === 'OVER'
-        ? this.state.winner
-          ? `${winner} Won`
-          : 'Tie'
-        : 'In Progress';
+      // eslint-disable-next-line no-nested-ternary
+      this.state.status === 'OVER' ? (this.state.winner ? `${winner} Won` : 'Tie') : 'In Progress';
     if (!playerOne || !playerTwo || !result) {
       return;
     }

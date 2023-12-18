@@ -82,7 +82,6 @@ export default abstract class Game<StateType extends GameState, MoveType> {
    */
   public leave(player: Player): void {
     this._leave(player);
-    this._players = this._players.filter(p => p.id !== player.id);
   }
 
   public toModel(): GameInstance<StateType> {
